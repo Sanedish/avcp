@@ -1,0 +1,14 @@
+{
+  "format": "avcp-profile-1",
+  "name": "Track Day",
+  "savedAt": "2026-06-10T12:00:00.000Z",
+  "settings": {
+    "theme": "crimson",
+    "units2": "{\"speed\":\"kmh\",\"temp\":\"c\",\"dist\":\"km\",\"press\":\"bar\"}",
+    "gauges": "{\"redlinePct\":95,\"smoothing\":35}",
+    "alerts": "{\"shift\":true,\"speed\":false,\"speedKmh\":120}",
+    "appearance": "{\"bgMode\":\"preset\",\"bgPreset\":\"carbon\",\"glass\":false,\"bgDim\":45}",
+    "uiScale": "100",
+    "startTab": "dashboard"
+  }
+}

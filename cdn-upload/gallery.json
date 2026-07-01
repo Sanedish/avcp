@@ -1,0 +1,11 @@
+{
+  "format": "avcp-gallery-1",
+  "backgrounds": [],
+  "profiles": [
+    {
+      "name": "Track Day",
+      "description": "Redline theme · boost in bar · shift light armed · 95% redline",
+      "url": "https://cdn.boykisser.cloud/malo-interactive/avcp/profiles/track-day.json"
+    }
+  ]
+}

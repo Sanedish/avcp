@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Luna Mattin's AVCP</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <!-- ===================== TOP BAR ===================== -->
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="/ui/images/beamng_logo_50x50.png" alt="BeamNG"
+           onerror="this.outerHTML='<span class=&quot;logo logo-fallback&quot;>⚙</span>'">
+      <div class="brand-text">
+        <div class="brand-title">Luna <span class="brand-accent">Mattins</span> AVCP<span class="ver">v0.4</span></div>
+        <div class="brand-sub" id="vehName">no vehicle</div>
+      </div>
+    </div>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="vehicle">Vehicle</button>
+      <button class="tab" data-tab="world">World</button>
+      <button class="tab" data-tab="chaos">Chaos</button>
+      <button class="tab" data-tab="ai">AI &amp; Traffic</button>
+      <button class="tab" data-tab="stats">Session Statistics</button>
+      <button class="tab" data-tab="datalab">Data Lab</button>
+      <button class="tab" data-tab="diag">Wheel / DT Info</button>
+      <button class="tab" data-tab="susp">Suspension</button>
+      <button class="tab" data-tab="console">Console</button>
+      <button class="tab" data-tab="settings">Settings</button>
+      <button class="tab" data-tab="credits">Credits</button>
+    </nav>
+
+    <div class="status">
+      <span class="pill" id="simSpeedPill">1.0×</span>
+      <span class="conn" id="conn"><i class="dot"></i><span id="connText">connecting…</span></span>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <section class="page active" id="page-dashboard">
+      <div class="grid dash-grid">
+        <div class="card gauge-card">
+          <canvas class="gauge" id="gSpeed"></canvas>
+        </div>
+        <div class="card gauge-card">
+          <canvas class="gauge" id="gTach"></canvas>
+          <div class="gear-badge"><span id="gearVal">N</span></div>
+        </div>
+        <div class="card gmeter-card">
+          <div class="card-h">G-Force <button class="mini" id="gReset">reset</button></div>
+          <canvas id="gMeter"></canvas>
+        </div>
+
+        <div class="card inputs-card">
+          <div class="card-h">Driver Inputs</div>
+          <div class="pedal-row">
+            <div class="pedal"><label>Throttle</label><canvas class="vbar" data-bar="throttle"></canvas></div>
+            <div class="pedal"><label>Brake</label><canvas class="vbar" data-bar="brake"></canvas></div>
+            <div class="pedal"><label>Clutch</label><canvas class="vbar" data-bar="clutch"></canvas></div>
+          </div>
+          <label class="hbar-label">Steering</label>
+          <canvas class="hbar" id="steerBar"></canvas>
+        </div>
+
+        <div class="card indicators-card">
+          <div class="card-h">Indicators</div>
+          <div class="indicators" id="indicators">
+            <div class="ind" data-k="signal_L">[ ⇐ LEFT ]</div>
+            <div class="ind" data-k="signal_R">[ RIGHT ⇒ ]</div>
+            <div class="ind" data-k="lights">[ LIGHTS ]</div>
+            <div class="ind" data-k="highbeam">[ HIGH-BEAMS ]</div>
+            <div class="ind" data-k="parkingbrake">[ P-BRAKE ]</div>
+            <div class="ind" data-k="abs">[ ABS ]</div>
+            <div class="ind" data-k="tcsActive">[ TCS ]</div>
+            <div class="ind" data-k="espActive">[ ESC ]</div>
+            <div class="ind" data-k="lowfuel">[ LOW FUEL ]</div>
+            <div class="ind" data-k="checkengine">[ CHECK ENGINE ]</div>
+            <div class="ind" data-k="hazard">[ HAZ ⇎ ARD ]</div>
+            <div class="ind" data-k="cruiseControlActive">[ CRUISE CTRL ]</div>
+          </div>
+          <div class="readouts" id="readouts"></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="card-h">Speed / RPM history</div>
+          <canvas id="histChart"></canvas>
+        </div>
+
+        <div class="card wheels-card">
+          <div class="card-h">Wheels (slip / drive·brake)</div>
+          <div class="wheels" id="wheels"></div>
+        </div>
+
+        <div class="card nav-card">
+          <div class="card-h">Navigation <span class="aid" id="navCoords">–</span></div>
+          <div class="nav-wrap">
+            <canvas id="compass" class="navcanvas"></canvas>
+            <div class="nav-side" id="navSide"></div>
+          </div>
+          <div class="hint">Heading-up positional radar - the cyan trail is your recent path
+            (forward = up). Not a terrain map.</div>
+        </div>
+
+        <div class="card raw-card">
+          <div class="card-h">Raw telemetry <button class="mini" id="rawToggle">show</button></div>
+          <div class="raw-table hidden" id="rawTable"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== VEHICLE ===================== -->
+    <section class="page" id="page-vehicle">
+      <div class="grid">
+        <div class="card">
+          <div class="card-h">Quick Actions</div>
+          <div class="btn-grid" id="vehActions"></div>
+        </div>
+        <div class="card">
+          <div class="card-h">Lights &amp; Electrics</div>
+          <div class="btn-grid" id="vehElectrics"></div>
+        </div>
+        <div class="card">
+          <div class="card-h">Powertrain</div>
+          <div class="btn-grid" id="vehPowertrain"></div>
+        </div>
+        <div class="card">
+          <div class="card-h">Spawn / Replace Vehicle</div>
+          <div class="row">
+            <input id="spawnModel" list="modelList" autocomplete="off" placeholder="model key (e.g. etk800, covet, sunburst2)" />
+            <datalist id="modelList"></datalist>
+          </div>
+          <div class="row">
+            <button class="btn" id="btnReplace">Replace current</button>
+            <button class="btn primary" id="btnSpawn">Spawn new</button>
+          </div>
+          <div class="hint">Common: <code>covet</code> <code>etk800</code> <code>sunburst2</code>
+            <code>pickup</code> <code>bastion</code> <code>vivace</code> <code>scintilla</code>
+            <code>bx</code> <code>autobello</code></div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="btnDeleteVeh">Delete current</button>
+            <button class="btn" id="btnDeleteAll">Clear all others</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Fuel / Energy <span class="aid" id="fuelLevel">–</span></div>
+          <div class="btn-grid" id="fuelBtns"></div>
+          <label class="slider-label">Set level <span id="fuelSetVal">100%</span></label>
+          <input type="range" id="fuelSlider" min="0" max="100" step="1" value="100" class="slider">
+          <div class="hint">Sets every energy storage (fuel tank / EV battery) on the active vehicle.
+            Best-effort across vehicles - drag then release to apply.</div>
+        </div>
+
+        <div class="card offroad-card">
+          <div class="card-h">Drivetrain / Off-road
+            <span class="ctx-toggle">
+              <button class="mini" id="offRefresh">refresh</button>
+              <button class="mini" id="diffLockAll">lock diffs</button>
+              <button class="mini" id="diffOpenAll">open diffs</button>
+            </span>
+          </div>
+          <div class="offroad" id="offroadGrid"><div class="hint">Open this tab or hit refresh to read the active vehicle's powertrain devices (transfer case, range box, differentials).</div></div>
+          <div class="hint">Cycle 2WD/4WD/AWD, high/low range and diff lock live. Known to be flaky, spam click if not responding</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== WORLD ===================== -->
+    <section class="page" id="page-world">
+      <div class="grid">
+        <div class="card">
+          <div class="card-h">Time of Day</div>
+          <input type="range" id="todSlider" min="0" max="1" step="0.005" value="0.5" class="slider">
+          <div class="slider-val" id="todVal">12:00</div>
+          <div class="btn-grid">
+            <button class="btn" data-tod="0.20">Dawn</button>
+            <button class="btn" data-tod="0.5">Noon</button>
+            <button class="btn" data-tod="0.78">Dusk</button>
+            <button class="btn" data-tod="0.0">Midnight</button>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="todPlay">Time flow: <b id="todPlayState">?</b></button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Simulation Speed</div>
+          <div class="btn-grid" id="simSpeeds"></div>
+          <div class="hint">Slow-motion is great for inspecting crashes &amp; suspension.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Gravity</div>
+          <div class="btn-grid" id="gravityGrid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Camera &amp; Sim</div>
+          <div class="btn-grid" id="worldMisc"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Weather</div>
+          <label class="slider-label">Fog density</label>
+          <input type="range" id="fogSlider" min="0" max="1" step="0.01" value="0" class="slider">
+          <label class="slider-label">Cloud cover</label>
+          <input type="range" id="cloudSlider" min="0" max="1" step="0.01" value="0" class="slider">
+          <label class="slider-label">Wind speed</label>
+          <input type="range" id="windSlider" min="0" max="40" step="0.5" value="0" class="slider">
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CHAOS & PHYSICS ===================== -->
+    <section class="page" id="page-chaos">
+      <div class="grid">
+        <div class="card">
+          <div class="card-h">Instant State Triggers</div>
+          <div class="trigger-grid" id="chaosTriggers"></div>
+          <div class="hint">Acts on the active vehicle. Deflate/break are physical &amp; irreversible
+            until you <b>Repair</b> (rebuilds the vehicle in place).</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Time Dilation</div>
+          <label class="slider-label">Slow-motion <span id="chaosSlowVal">1.0×</span></label>
+          <input type="range" id="chaosSlow" min="1" max="100" step="1" value="1" class="slider">
+          <div class="slider-val" id="chaosSimReadout">real-time</div>
+          <div class="btn-grid" id="chaosSims"></div>
+          <button class="btn big hold ok" id="chaosHold" style="margin-top:10px;width:100%">⏱ Hold to Slow-Mo</button>
+          <div class="hint">Drag for fine control, tap a preset, or press &amp; hold the button for a
+            momentary bullet-time burst (snaps back to real-time on release).</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Gravity Matrix</div>
+          <div class="btn-grid" id="chaosGravity"></div>
+          <label class="slider-label">Fine tune <span id="chaosGravVal">-9.81 m/s²</span></label>
+          <input type="range" id="chaosGravSlider" min="-30" max="10" step="0.1" value="-9.81" class="slider">
+          <div class="hint">Also available on the <b>World</b> tab.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== AI & TRAFFIC ===================== -->
+    <section class="page" id="page-ai">
+      <div class="grid">
+        <div class="card">
+          <div class="card-h">Quick Spawn</div>
+          <label class="slider-label">Amount <span id="qsAmtVal">4</span></label>
+          <input type="range" id="qsAmt" min="1" max="12" step="1" value="4" class="slider">
+          <div class="btn-grid" id="qsGrid"></div>
+          <label class="slider-label">Chaos Factor <span id="chaosFacVal">35%</span></label>
+          <input type="range" id="chaosFac" min="0" max="100" step="1" value="35" class="slider">
+          <div class="hint" id="aiStatus">Chaos Factor drives traffic aggression and random events. Quick Spawn updates the behavior matrix after vehicles appear.</div>
+        </div>
+
+        <div class="card matrix-card">
+          <div class="card-h">Behavior Matrix
+            <span class="ctx-toggle">
+              <button class="mini" id="matrixRefresh">refresh</button>
+              <button class="mini" id="matrixChaseAll">all chase me</button>
+              <button class="mini" id="matrixCalmAll">calm all</button>
+            </span>
+          </div>
+          <div class="ai-matrix" id="aiMatrix"><div class="hint">Open this tab or hit refresh to list spawned vehicles. Your vehicle is shown for reference and cannot be changed here.</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Player Vehicle AI</div>
+          <div class="btn-grid" id="aiModes"></div>
+          <label class="slider-label">AI aggression <span id="aiAggrVal">0.30</span></label>
+          <input type="range" id="aiAggr" min="0" max="1" step="0.05" value="0.3" class="slider">
+          <div class="hint">Set a target speed (km/h) for "Set speed" mode:</div>
+          <div class="row"><input id="aiSpeed" type="number" value="80" min="0"><button class="btn" id="aiSetSpeed">Set speed mode</button></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Traffic System</div>
+          <div class="btn-grid">
+            <button class="btn primary" id="trafficActivate">Activate</button>
+            <button class="btn" id="trafficDeactivate">Deactivate</button>
+          </div>
+          <label class="slider-label">Spawn amount <span id="trAmtVal">3</span></label>
+          <input type="range" id="trAmt" min="1" max="12" step="1" value="3" class="slider">
+          <div class="btn-grid">
+            <button class="btn" id="trafficSpawn">Spawn traffic</button>
+            <button class="btn" id="trafficDelete">Delete traffic</button>
+          </div>
+          <label class="slider-label">Base aggression <span id="trAggrVal">0.30</span></label>
+          <input type="range" id="trAggr" min="0" max="1" step="0.05" value="0.3" class="slider">
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== STATISTICS ===================== -->
+    <section class="page" id="page-stats">
+      <div class="grid stats-grid">
+        <div class="card stat"><div class="stat-label">Top speed</div><div class="stat-val" id="stTopSpeed">–</div></div>
+        <div class="card stat"><div class="stat-label">Max RPM</div><div class="stat-val" id="stMaxRpm">–</div></div>
+        <div class="card stat"><div class="stat-label">Max lateral G</div><div class="stat-val" id="stMaxLat">–</div></div>
+        <div class="card stat"><div class="stat-label">Max accel/brake G</div><div class="stat-val" id="stMaxLon">–</div></div>
+        <div class="card stat"><div class="stat-label">0–100 km/h</div><div class="stat-val" id="st0100">–</div></div>
+        <div class="card stat"><div class="stat-label">0–60 mph</div><div class="stat-val" id="st060">–</div></div>
+        <div class="card stat"><div class="stat-label">Distance (session)</div><div class="stat-val" id="stDist">–</div></div>
+        <div class="card stat"><div class="stat-label">Odometer</div><div class="stat-val" id="stOdo">–</div></div>
+
+        <!-- ===== live performance (FPS / memory / VRAM, read from the engine) ===== -->
+        <div class="card perf-tri">
+          <div class="card-h">Frame rate
+            <span class="ctx-toggle"><span class="aid" id="perfFt">– ms</span><button class="mini" id="perfReset">reset</button></span>
+          </div>
+          <div class="perf-hero"><span class="perf-big" id="fpsBig">–</span><span class="perf-unit">FPS</span></div>
+          <div class="perf-mma">
+            <div class="pm"><span>min</span><b id="fpsMin">–</b></div>
+            <div class="pm"><span>avg</span><b id="fpsAvg">–</b></div>
+            <div class="pm"><span>max</span><b id="fpsMax">–</b></div>
+          </div>
+          <canvas id="fpsChart" class="perfcanvas"></canvas>
+        </div>
+
+        <div class="card perf-tri">
+          <div class="card-h">Memory <span class="aid" id="memSys">–</span></div>
+          <div class="perf-hero"><span class="perf-big" id="memBig">–</span><span class="perf-unit">GB</span></div>
+          <div class="perf-sub">BeamNG process working set · bar = system RAM</div>
+          <div class="membar"><i id="memSysFill"></i></div>
+          <canvas id="memChart" class="perfcanvas"></canvas>
+        </div>
+
+        <div class="card perf-tri">
+          <div class="card-h">GPU · VRAM <span class="aid" id="vramPct">–</span></div>
+          <div class="perf-hero"><span class="perf-big" id="vramBig">–</span><span class="perf-unit">GB</span></div>
+          <div class="perf-sub" id="vramTotalNote">video memory in use</div>
+          <div class="membar"><i id="vramFill"></i></div>
+          <canvas id="vramChart" class="perfcanvas"></canvas>
+        </div>
+
+        <div class="card sysinfo-card">
+          <div class="card-h">System</div>
+          <div class="raw-table" id="sysInfoTable"><div class="hint">Connect to the running game to read CPU / GPU / RAM info.</div></div>
+        </div>
+
+        <div class="card luatasks-card">
+          <div class="card-h">Resource hogs · GE Lua profiler
+            <span class="ctx-toggle"><span class="aid" id="luaTasksStatus">idle</span><button class="mini" id="luaProfileBtn">profile 2s</button></span>
+          </div>
+          <div class="luatasks" id="luaTasks"><div class="hint">Samples BeamNG's game-engine Lua VM for ~2 s and ranks the functions that ate the most time - the closest "what's eating the frame" breakdown the game exposes to a UI. It profiles only the GE Lua thread (not C++ render/physics or the vehicle VM), adds a little overhead while sampling, then switches itself back off.</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Session</div>
+          <div class="btn-grid">
+            <button class="btn" id="stReset">Reset session stats</button>
+            <button class="btn" id="stArmLaunch">Arm 0–100 timer</button>
+          </div>
+          <div class="hint" id="stLaunchHint">Timer auto-arms when stationary, fires on launch.</div>
+          <div class="card-h" style="margin-top:18px">Telemetry log <span class="aid" id="logCount">0 rows</span></div>
+          <div class="btn-grid">
+            <button class="btn" id="logToggle">Start logging</button>
+            <button class="btn" id="logExport">Export CSV</button>
+            <button class="btn" id="logClear">Clear buffer</button>
+          </div>
+          <div class="hint">Records speed/RPM/inputs/temps at ~5 Hz into memory, then downloads a
+            CSV in your browser. Nothing is written to the game folder.</div>
+        </div>
+        <div class="card vehinfo-card">
+          <div class="card-h">Vehicle info</div>
+          <div class="raw-table" id="vehInfoTable"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== DATA LAB ===================== -->
+    <section class="page" id="page-datalab">
+      <div class="grid">
+        <div class="card dl-rec-card">
+          <div class="card-h">Recorder <span class="aid" id="dlRecState">idle</span></div>
+          <div class="row">
+            <input id="dlName" placeholder="take name (auto-named if empty)" autocomplete="off">
+          </div>
+          <label class="slider-label">Sample rate
+            <select id="dlRate" class="dl-select">
+              <option value="60">60 Hz</option>
+              <option value="30">30 Hz</option>
+              <option value="20" selected>20 Hz</option>
+              <option value="10">10 Hz</option>
+              <option value="5">5 Hz</option>
+              <option value="2">2 Hz</option>
+              <option value="1">1 Hz</option>
+            </select>
+          </label>
+          <label class="slider-label">Channel categories</label>
+          <div class="dl-cats" id="dlCats"></div>
+          <div class="btn-grid" style="margin-top:14px">
+            <button class="btn big primary" id="dlRecBtn">● Start recording</button>
+            <button class="btn big" id="dlMarkerBtn">⚑ Marker (M)</button>
+          </div>
+          <div class="hint">Samples the live telemetry streams into named channels and
+            auto-saves to the library on stop. Leave every category on for an extensive
+            full-system take, or narrow the scope for long sessions. Drop markers at
+            corner entry, a suspension hit, a dyno pull - anything you'll want to find
+            again in the graph.</div>
+        </div>
+
+        <div class="card dl-lib-card">
+          <div class="card-h">Library
+            <span class="ctx-toggle">
+              <span class="aid" id="dlStorage"></span>
+              <button class="mini" id="dlImportBtn">import json</button>
+              <input type="file" id="dlImportFile" accept=".json,application/json" class="hidden">
+            </span>
+          </div>
+          <div class="dl-list" id="dlList"><div class="hint">No recordings yet…</div></div>
+          <div class="hint">Recordings persist in this browser's IndexedDB - sandboxed,
+            never written to BeamNG game files. CSV opens in any spreadsheet or analysis
+            tool; JSON round-trips back through <b>import</b>, so takes can be shared
+            between machines and people.</div>
+        </div>
+
+        <div class="card flow-card dl-an-card">
+          <div class="card-h">Analyzer <span class="aid" id="dlTitle">no recording loaded</span></div>
+          <div class="dl-transport">
+            <button class="btn" id="dlToStart" title="Jump to start">⏮</button>
+            <button class="btn primary" id="dlPlay">▶ Play</button>
+            <button class="btn" id="dlLoop" title="Loop playback">Loop</button>
+            <select id="dlSpeed" class="dl-select" title="Playback speed">
+              <option value="0.25">0.25×</option>
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+            <span class="dl-time" id="dlTime">–</span>
+            <span class="dl-spacer"></span>
+            <button class="btn" id="dlMode" title="Overlay all channels or stack one lane per channel">Lanes</button>
+            <button class="btn" id="dlZoomOut" title="Zoom out">−</button>
+            <button class="btn" id="dlZoomIn" title="Zoom in">+</button>
+            <button class="btn" id="dlFit" title="Fit whole take">Fit</button>
+            <button class="btn" id="dlDrive" title="Feed the recorded values back into the panel">Drive dashboard</button>
+            <button class="btn dl-actuate" id="dlActuate" title="Replay the recorded driver inputs into the real vehicle">Actuate vehicle</button>
+          </div>
+          <canvas id="dlChart" class="dlcanvas"></canvas>
+          <canvas id="dlMini" class="dlmini"></canvas>
+          <div class="dl-readout" id="dlReadout"></div>
+          <div class="dl-chans" id="dlChans"></div>
+          <div class="dl-stats" id="dlStats"></div>
+          <div class="hint">Click or drag the graph to scrub the cursor; mouse-wheel zooms
+            around the pointer and the strip below pans (double-click fits the whole take).
+            <b>Lanes</b> gives every channel its own scaled track, data-logger style. While
+            <b>Drive dashboard</b> is on, recorded values are fed back into the panel - open
+            the Dashboard tab and the real gauges replay the take; live telemetry is ignored
+            until you switch it off. <b>Actuate vehicle</b> replays the recorded <i>driver
+            inputs</i> (throttle, brake, clutch, steering, handbrake, gear) into the real
+            car while playing - open-loop, so start from the same spot with the same vehicle
+            for a faithful re-run; physics drift accumulates over long takes. It overrides
+            your controller while playing; pause or stop and the controls are zeroed and
+            handed straight back (the car keeps rolling - brake yourself).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== DIAGNOSTICS ===================== -->
+    <section class="page" id="page-diag">
+      <div class="grid">
+        <div class="card">
+          <div class="card-h">Thermals &amp; Engine load</div>
+          <div class="thermo" id="thermo"><div class="hint">Waiting for telemetry…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-h">Brake Power &amp; Temp <span class="aid" id="brakeTotal">surface temp · power</span></div>
+          <div class="brakes" id="brakeGrid"><div class="hint">Waiting for telemetry…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-h">Damage State:<span class="aid" id="dmgState">–</span></div>
+          <div class="damage" id="damageGrid"><div class="hint">Waiting for telemetry…</div></div>
+          <div class="btn-grid" style="margin-top:12px">
+            <button class="btn ok" id="dmgRepair">Repair vehicle</button>
+            <button class="mini" id="dmgRefresh">refresh</button>
+          </div>
+        </div>
+        <div class="card flow-card">
+          <div class="card-h">Powertrain Flow <span class="aid" id="flowLayout">–</span></div>
+          <div class="flow" id="powerFlow"><div class="hint">Waiting for telemetry…</div></div>
+          <div class="hint">Live Power Graph - Lit nodes &amp; arrows show where torque is flowing, driven wheels are highlighted.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SUSPENSION ===================== -->
+    <section class="page" id="page-susp">
+      <div class="grid">
+        <div class="card">
+          <div class="card-h">Chassis Load Map <span class="aid" id="suspTotal">–</span></div>
+          <canvas id="chassisMap" class="suspcanvas"></canvas>
+          <div class="susp-attitude" id="suspAttitude"></div>
+        </div>
+        <div class="card">
+          <div class="card-h">Damper Rebound <span class="aid">compression ▲ / rebound ▼</span></div>
+          <div class="damper-grid" id="damperGrid"><div class="hint">Waiting for telemetry…</div></div>
+          <div class="hint">Bars show each corner's load rate &amp; how hard the damper is resisting
+            compression (orange) or rebound (blue) at the time.</div>
+        </div>
+
+        <div class="card offroad-susp-card">
+          <div class="card-h">Pre-Runner Suspension Travel
+            <span class="ctx-toggle">
+              <span class="aid airborne" id="orFlightState"></span>
+              <button class="mini" id="orReset">reset</button>
+            </span>
+          </div>
+          <div class="travel-row" id="travelRow"><div class="hint">Waiting for telemetry…</div></div>
+          <label class="slider-label">Articulation / cross-axle flex <span id="orFlexVal">0%</span></label>
+          <div class="flexbar"><i id="orFlexFill"></i></div>
+          <div class="or-stats" id="orStats"></div>
+          <div class="hint">*Travel is read from each wheel's vertical contact load, though BeamNG exposes no
+            direct suspension-travel channel, so resting load is learned as the reference: a planted
+            wheel sits mid-track, a hard hit drives it up, a drooping or airborne wheel drops to <b>AIR</b>, which may
+            also lead to related statistics working badly to not at all - depending on situation.
+            The chip under each corner is the live ground material that tyre is on (dirt, mud, rock,
+            gravel, sand, asphalt…), read from the wheel's contact ground-model.</div>
+        </div>
+
+        <div class="card flow-card">
+          <div class="card-h">Pre-Runner suspension compression graph<span class="aid">resting load + shared scale</span></div>
+          <canvas id="compChart" class="suspcanvas tall"></canvas>
+          <div class="hint">Each corner's live compression as a multiple of its resting load. The dashed
+            line is static ride (1.0×); spikes above are bumps &amp; landings - the big hits a pre-runner
+            soaks up - and dips toward zero are the wheel extending into droop or going airborne.</div>
+        </div>
+
+          <div class="card flow-card">
+          <div class="card-h">Per-corner load [GP]<span class="aid">kN · shared scale</span></div>
+          <canvas id="loadChart" class="suspcanvas tall"></canvas>
+          <div class="hint">Vertical contact load per wheel over time. Watch how fast spikes settle
+            after bumps &amp; landings! -> smooth decay = well-damped, lingering oscillation = under-damped.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CONSOLE ===================== -->
+    <section class="page" id="page-console">
+      <div class="card console-card">
+        <div class="card-h">
+          Lua Console
+          <span class="ctx-toggle">
+            <button class="ctx active" data-ctx="ge">Game Engine</button>
+            <button class="ctx" data-ctx="veh">Active Vehicle</button>
+          </span>
+        </div>
+        <div class="console-out" id="consoleOut"></div>
+        <div class="row console-in">
+          <input id="consoleInput" placeholder='e.g. core_vehicles.getCurrentVehicleDetails().model.Name' spellcheck="false">
+          <button class="btn primary" id="consoleRun">Run</button>
+        </div>
+        <div class="hint">Output of expressions is fetched back via the engine callback bridge.
+          Use the toggle to run in the active vehicle's Lua VM instead.</div>
+      </div>
+    </section>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <section class="page" id="page-settings">
+      <div class="grid">
+        <div class="card">
+          <div class="card-h">Theme</div>
+          <div class="theme-grid" id="themeGrid"></div>
+          <label class="slider-label" style="margin-top:16px">Custom colours</label>
+          <div class="row">
+            <label class="clab">Accent <input type="color" id="customAccent" value="#ff7a18"></label>
+            <label class="clab">Data <input type="color" id="customData" value="#3cc6ff"></label>
+            <button class="btn" id="applyCustom">Apply custom</button>
+          </div>
+          <div class="hint">Pick a preset or roll your own. Themes re-skin the whole panel,
+            gauges included.</div>
+        </div>
+
+        <div class="card css-card">
+          <div class="card-h">Custom CSS <span class="aid" id="cssState">on</span></div>
+          <textarea id="cssBox" class="css-box" spellcheck="false" placeholder="/* Your CSS loads last, so it overrides the panel's stylesheet.
+   Useful tokens: --accent --data --bg --surface --surface-2 --field
+   --line --txt --dim --ok --warn --bad --r-sm --r-md --r-lg
+
+   .card { border-radius: 4px; }                  sharp corners
+   .stat-val { font-family: Consolas, monospace; } mono numerals
+   html { --bad: #ff2080 !important; }             theme tokens set
+                                                   inline need !important */"></textarea>
+          <div class="btn-grid" style="margin-top:10px">
+            <button class="btn primary" id="cssApply">Apply &amp; save</button>
+            <button class="btn" id="cssToggle">Toggle on / off</button>
+          </div>
+          <div class="hint">Saved locally like every other setting and carried inside profiles -
+            skim the CSS of profiles other people share before loading them. A broken rule can't
+            damage anything: toggle off to recover instantly.
+            <button class="mini" id="cssClear">clear saved css</button></div>
+        </div>
+
+        <div class="card appearance-card">
+          <div class="card-h">Personalization · Background &amp; Glass</div>
+          <label class="slider-label" style="margin-top:0">Background</label>
+          <div class="bg-grid" id="bgPresetGrid"></div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn" id="bgUpload">Upload image…</button>
+            <button class="btn" id="bgRemove">Remove custom</button>
+            <input type="file" id="bgFile" accept="image/*" class="hidden">
+          </div>
+          <div class="bg-preview" id="bgPreview"></div>
+
+          <label class="slider-label">Background blur <span id="bgBlurVal">0px</span></label>
+          <input type="range" id="bgBlur" min="0" max="40" step="1" value="0" class="slider">
+          <label class="slider-label">Background dim <span id="bgDimVal">45%</span></label>
+          <input type="range" id="bgDim" min="0" max="90" step="1" value="45" class="slider">
+
+          <div class="card-h" style="margin-top:18px">Glassmorphism <span class="aid" id="glassState">off</span></div>
+          <div class="btn-grid">
+            <button class="btn" id="glassToggle">Toggle glass panels</button>
+          </div>
+          <label class="slider-label">Glass blur <span id="glassBlurVal">14px</span></label>
+          <input type="range" id="glassBlur" min="0" max="30" step="1" value="14" class="slider">
+          <label class="slider-label">Glass solidity <span id="glassOpacityVal">60%</span></label>
+          <input type="range" id="glassOpacity" min="20" max="95" step="1" value="60" class="slider">
+
+          <div class="hint">Drop in your own image - a livery shot, a map, a wallpaper - and the
+            panel wears it behind frosted-glass cards. Your image is stored locally in this
+            browser's IndexedDB (sandboxed, never written to BeamNG game files) and is never
+            uploaded anywhere. Glass uses backdrop blur; if the game feels heavy, lower the
+            glass blur or switch glass off.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Units</div>
+          <div class="btn-grid" id="unitsGrid">
+            <button class="btn" data-units="metric">Metric (km/h · °C)</button>
+            <button class="btn" data-units="imperial">Imperial (mph · °F)</button>
+          </div>
+          <label class="slider-label" style="margin-top:14px">Per-quantity</label>
+          <div class="units-fine" id="unitsFine">
+            <label class="clab">Speed
+              <select class="dl-select" data-unit="speed"><option value="kmh">km/h</option><option value="mph">mph</option></select></label>
+            <label class="clab">Temperature
+              <select class="dl-select" data-unit="temp"><option value="c">°C</option><option value="f">°F</option></select></label>
+            <label class="clab">Distance
+              <select class="dl-select" data-unit="dist"><option value="km">km</option><option value="mi">mi</option></select></label>
+            <label class="clab">Pressure
+              <select class="dl-select" data-unit="press"><option value="psi">psi</option><option value="bar">bar</option><option value="kpa">kPa</option></select></label>
+          </div>
+          <div class="hint">Mix freely - km/h with boost in bar, mph with °C… The presets above
+            are shortcuts that set all four at once.</div>
+          <div class="card-h" style="margin-top:18px">Keyboard shortcuts <span class="aid" id="keysState">on</span></div>
+          <div class="btn-grid">
+            <button class="btn" id="keysToggle">Toggle shortcuts</button>
+            <button class="btn" id="keysHelp">Show shortcut list</button>
+          </div>
+          <div class="hint">Shortcuts work on any tab except while typing in a field or the console.</div>
+
+          <div class="card-h" style="margin-top:18px">Intro video <span class="aid" id="introState">on</span></div>
+          <div class="btn-grid">
+            <button class="btn" id="introToggle">Toggle intro video</button>
+            <button class="btn" id="introReplay">Replay intro now</button>
+          </div>
+          <div class="hint">The intro plays once per browser/CEF profile, on the very first
+            launch. If it ever re-triggers (e.g. after clearing the cache) and you'd rather
+            never see it again, switch it off here - the setting is permanent until reset.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Gauges <button class="mini" id="gaugeReset">reset</button></div>
+          <label class="slider-label">Speed dial max <span id="gSpeedMaxVal">240</span></label>
+          <input type="range" id="gSpeedMax" min="120" max="400" step="10" value="240" class="slider">
+          <label class="slider-label">RPM dial max <span id="gRpmMaxVal">auto</span></label>
+          <input type="range" id="gRpmMax" min="0" max="16000" step="500" value="0" class="slider">
+          <label class="slider-label">Redline <span id="gRedlineVal">90%</span></label>
+          <input type="range" id="gRedline" min="60" max="100" step="1" value="90" class="slider">
+          <label class="slider-label">Needle smoothing <span id="gSmoothVal">25%</span></label>
+          <input type="range" id="gSmooth" min="5" max="60" step="1" value="25" class="slider">
+          <div class="row" style="margin-top:6px">
+            <label class="clab"><input type="checkbox" id="gTicks" checked> Tick marks</label>
+            <label class="clab">Speed decimals
+              <select id="gDecimals"><option>0</option><option>1</option></select>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Interface &amp; layout</div>
+          <label class="slider-label">UI scale <span id="uiScaleVal">100%</span></label>
+          <input type="range" id="uiScale" min="80" max="130" step="5" value="100" class="slider">
+          <label class="slider-label">Startup tab</label>
+          <select id="startTabSel" class="dl-select" style="width:100%"></select>
+          <div class="card-h" style="margin-top:18px">Card layout</div>
+          <div class="btn-grid">
+            <button class="btn primary" id="layoutEdit">Edit layout</button>
+            <button class="btn" id="layoutReset">Reset layout</button>
+          </div>
+          <div class="hint">The layout editor works across every tab: drag cards (or use the
+            ◀ ▶ arrows) to rearrange, hit 👁 to hide cards you never use, then Done. A saved
+            layout survives updates only while a tab's card set is unchanged - otherwise that
+            tab safely resets itself instead of scrambling.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Driving alerts</div>
+          <div class="btn-grid">
+            <button class="btn" id="alShift">Shift light</button>
+            <button class="btn" id="alSpeed">Overspeed warning</button>
+          </div>
+          <label class="slider-label" style="margin-top:14px">Overspeed threshold</label>
+          <div class="row">
+            <input type="number" id="alSpeedVal" min="10" step="5" value="120">
+            <span class="aid" id="alSpeedUnit">km/h</span>
+          </div>
+          <div class="hint">The shift light flashes the screen edges red when the engine passes
+            the redline configured under Gauges; the overspeed warning holds an amber border
+            above the threshold. Purely visual - no sounds, nothing is sent to the game.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Profiles
+            <span class="ctx-toggle">
+              <button class="mini" id="profImport">import json</button>
+              <input type="file" id="profImportFile" accept=".json,application/json" class="hidden">
+            </span>
+          </div>
+          <div class="row">
+            <input id="profName" placeholder="profile name (e.g. Track day)" autocomplete="off">
+            <button class="btn primary" id="profSave">Save</button>
+          </div>
+          <div class="dl-list" id="profList"></div>
+          <div class="hint">A profile snapshots the whole setup - theme, units, gauges,
+            background &amp; glass, card layout, alerts, UI scale, startup tab. Loading one
+            applies it and reloads the panel. Exports are plain JSON you can share; an
+            uploaded background image itself stays local (preset and online backgrounds
+            travel fine).</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Online gallery <span class="aid">optional · CDN</span></div>
+          <div class="btn-grid">
+            <button class="btn primary" id="galleryBrowse">Browse gallery</button>
+          </div>
+          <div id="galleryBox" style="margin-top:12px"></div>
+          <div class="hint">Curated themes, backgrounds and profiles from the Malo Interactive
+            CDN. Nothing is fetched until you press Browse; applied backgrounds display
+            straight from the CDN. Needs internet access.</div>
+        </div>
+
+        <div class="card storage-card">
+          <div class="card-h">Storage &amp; reset</div>
+          <p class="hint" id="storageNote">Settings are saved in this browser's localStorage
+            (key prefix <code>avcp.</code>); custom background images and Data Lab recordings
+            live in this browser's IndexedDB. All of it is browser-sandboxed and never writes
+            to BeamNG game files - clearing your browser/CEF cache resets everything.
+            "Reset all panel settings" leaves recordings alone; delete those separately.</p>
+          <div class="btn-grid">
+            <button class="btn danger" id="settingsWipe">Reset all panel settings</button>
+            <button class="btn danger" id="dlWipe">Delete all recordings</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CREDITS ===================== -->
+    <section class="page" id="page-credits">
+      <div class="grid credits-grid">
+        <div class="card credits-hero">
+          <div class="credits-kicker">Advanced Vehicle Control Panel</div>
+          <h1>Luna Mattins AVCP</h1>
+          <p class="creator-note">LMAVCP is a remastered, browser-based control and telemetry panel for BeamNG.drive.</p>
+        </div>
+
+        <div class="card credits-card discord-card">
+          <div class="discord-text">
+            <div class="credits-kicker">Community</div>
+            <div class="card-h">Join us on Discord</div>
+            <p>LMAVCP is a solo project and still evolving. If you'd like developer news, want to
+              suggest features, report bugs, or just chat with the devs and others interested in the mod feel free to join! </p>
+            <a class="btn primary discord-btn" href="https://discord.gg/MBahu2ydFH" target="_blank" rel="noopener noreferrer">Join our Discord →</a>
+            <p class="credits-small-note">Invite: <code>discord.gg/MBahu2ydFH</code></p>
+          </div>
+          <div class="discord-embed">
+            <iframe src="https://discord.com/widget?id=1512493985883492352&amp;theme=dark"
+                    width="350" height="500" allowtransparency="true" frameborder="0"
+                    title="BeamNG AVCP Discord Embed"
+                    sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+                    loading="lazy"></iframe>
+          </div>
+        </div>
+
+        <div class="card credits-card credits-note-card">
+          <div class="card-h">Thank you! <3</div>
+          <p>Thank you to the BeamNG.drive team for building such a deep, passionate simulation sandbox - and for letting users like me mod it to this extent.</p>
+          <p>Special thanks to everyone who tested LMAVCP at this early stage and helped shape the project.</p>
+        </div>
+
+        <div class="card credits-card credits-legal">
+          <div class="card-h">Attribution</div>
+          <p>BeamNG.drive&reg; is a registered trademark of BeamNG GmbH.</p>
+          <p>This is an unofficial, user-made mod and is not affiliated with or endorsed by BeamNG GmbH.</p>
+          <p>The header logo is referenced from the installed BeamNG.drive UI at runtime. The logo file is not included, copied, modified, or redistributed in this mod archive.</p>
+          <p>Luna Mattins / Sanedish is not affiliated with the BeamNG.drive&reg; developer team or trademark in any form and publishes this content solely as a user-made mod.</p>
+        </div>
+
+        <div class="card credits-card credits-note-card">
+          <div class="card-h">About development</div>
+          <p>LMAVCP is designed and programmed solo by me, Sanedish. I came into this with very
+            little experience around BeamNG's API and live dashboards, so parts of the codebase
+            were built or reworked with the help of AI-assisted tooling and other external help
+            that can't be individually attributed. Every feature ships only after being verified
+            against the running game.</p>
+          <img src="media/transparent.png" alt="WYPHIEEEEEEEEEEE!!!!! <3" width="256" height="256">
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- floating "done" affordance for the layout editor (visible in edit mode only) -->
+  <button id="layoutDone" class="layout-done" type="button">✓ Done - save layout</button>
+
+  <!-- keyboard shortcut help -->
+  <div id="keysOverlay" class="keys-overlay">
+    <div class="keys-modal">
+      <div class="card-h">Keyboard shortcuts <button class="mini" id="keysClose">close</button></div>
+      <div class="keys-list" id="keysList"></div>
+    </div>
+  </div>
+
+  <script src="./js/settings.js"></script>
+  <script src="./js/splash.js"></script>
+  <script src="./js/bridge.js"></script>
+  <script src="./js/gauges.js"></script>
+  <script src="./js/customize.js"></script>
+  <script src="./js/datalab.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Build artifact — rebuild with package-mod.ps1
+LunaMattinsAVCP.zip
+
+# Local machine paths / permissions — never publish
+.claude/settings.local.json
+
+# Dev-server scratch output
+.claude/shots/
+.claude/take.json
+
+# OS cruft
+Thumbs.db
+.DS_Store
