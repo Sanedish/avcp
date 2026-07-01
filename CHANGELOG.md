@@ -1,4 +1,7 @@
 # Changelog
+A lot of this has been absolutely fucked by Claude when I asked it to help with
+the commenting.. man fuck claude... qwq
+
 
 All notable changes to **Luna Mattins AVCP** are documented here. The format
 loosely follows [Keep a Changelog](https://keepachangelog.com/); the version
