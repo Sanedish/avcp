@@ -1,7 +1,8 @@
 # AVCP online gallery - CDN upload package
 
 Upload the contents of this folder to the CDN so the panel's
-**Settings → Online gallery** can find them. The panel fetches exactly one
+**Settings → Online gallery** can find them. The panel fetches exactly one.
+This is currently not implemented, but the code is technically there.
 hard-coded URL:
 
 ```
