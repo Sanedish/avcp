@@ -216,7 +216,7 @@ plain text (HTML/CSS/JS) and can be read top-to-bottom in a few minutes.
 - ✅ **No bundled game assets.** The header logo is *referenced* from the stock
   `/ui/images/beamng_logo_50x50.png`; if absent it falls back to a glyph. No
   copyrighted game asset is redistributed. Images under `images/` (e.g. credits
-  avatars) are the author's own content, supplied with the author's consent.
+  avatars) are supplied by the author.
 - ✅ **No analytics / phone-home / external libraries.** The panel's working
   connection is a WebSocket to the **game's own** external-app server on the
   page's host:port (`bng-ext-app-v1`). Nothing about the user or the session is
