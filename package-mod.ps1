@@ -29,6 +29,7 @@ $files = @(
     "js/settings.js",
     "js/splash.js",
     "js/bridge.js",
+    "js/remote.js",
     "js/gauges.js",
     "js/customize.js",
     "js/datalab.js",

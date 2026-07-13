@@ -6,6 +6,104 @@ shown matches the badge in the app header. Dates are ISO (YYYY-MM-DD).
 
 ---
 
+## v0.5 - 2026-07-14
+
+The layout-freedom & remote-access update: clone any gauge onto any tab,
+arrange everything on a free-placement grid, control the panel from your
+phone through an opt-in pairing relay (official or self-hosted - the full
+server ships in the repo with one-step launchers for every OS), and a round
+of bug fixes - including the runaway pedal/steering bars.
+
+### Added
+
+**Widget cloning** (Edit → + Add)
+- Any canvas gauge - speed dial, tachometer, G-meter, speed/RPM chart,
+  compass/radar, gear indicator, wheels status - can be cloned onto any tab
+  as a live tile. Clones are fed the same per-frame telemetry as the
+  dashboard originals, and only the visible page's instances render.
+- Every non-dashboard page gets a grid zone for clones; a ✕ in edit mode
+  removes one.
+
+**Free-placement tile grid**
+- Dashboard (and Credits) cards now live on a 12-column grid in the style of
+  BeamNG's app editor: drag to move, corner handle to resize, collision push
+  so tiles never overlap, and gravity-up compaction so hiding or shrinking a
+  tile never leaves a hole. Positions persist per page.
+- Top-bar **Edit / Cancel / + Add / Reset** controls; Esc cancels an edit
+  session and restores the pre-edit layout exactly.
+
+**Custom telemetry tiles** (Settings → Custom tiles)
+- User-authored dashboard tiles bound to any raw `electrics` field, with a
+  custom title, unit label and decimals. They ride the same grid/layout
+  engine as the built-in cards.
+
+**Per-tab UI scale** (Settings → Interface)
+- The UI scale is now stored and applied per tab instead of panel-wide.
+
+**Remote Access** (Settings → Remote Access, opt-in)
+- Use the panel on your phone with zero setup: toggle on, open
+  `avcp.malo-interactive.net` on the other device and enter the pairing code.
+  The panel makes an outbound, TLS-encrypted connection to the relay and pumps
+  the game's own protocol through it - no port forwarding, no installs, and
+  neither device ever sees the other's IP.
+- Strictly opt-in: off by default, never persisted, one client at a time with
+  a visible connected-state and kick button; everything stops when the toggle
+  goes off or the tab closes. Codes are short-lived, rate-limited and bound to
+  one host session. Full relay source ships in `server/` (not part of the mod
+  zip); the disclosure lives in the README's moderator section.
+- **Relay server setting**: the Remote Access card has a *Relay server* field,
+  so the panel can use a self-hosted relay without a fork (empty = official).
+  `server/README.md` gained a self-hosting guide, a wire-protocol spec for
+  independent re-implementations, and a written-down security model.
+- **Per-OS relay launchers**: `server/start.cmd` (Windows, double-clickable)
+  and `server/start.sh` (macOS/Linux) start a relay in one step - Node check,
+  first-run dependency install, printed connect URLs - including a `lan` mode
+  so a phone on your own Wi-Fi needs no cloud relay at all. `run.sh` remains
+  the Linux production installer (systemd + Cloudflare Tunnel).
+- **Official-relay status notice**: opening the Settings tab checks a
+  plain-text `STATUS=`/`REASON=` file on the CDN and marks the Remote Access
+  card as down (with the reason) when the official relay is offline. Skipped
+  for custom relays; informational only - it never blocks the toggle.
+- Relay hardening for the open-source release: malformed request paths and
+  upgrade URLs no longer crash the process (uncaught `decodeURIComponent` /
+  `URL` throws = remote DoS), and static responses send `nosniff`.
+
+### Changed
+- The render loops (dashboard and Data Lab analyzer) are driven by a Web
+  Worker ticker instead of `requestAnimationFrame`, so gauges, recordings
+  and alerts keep running at full rate while the browser tab is unfocused
+  (browsers throttle rAF in background tabs).
+- Data Lab: live-recording redraws are time-throttled (~20 Hz tail, ~4 Hz
+  full-take overview) so a long take can no longer jank the main thread.
+- Gallery assets are served exclusively from the CDN; the in-repo
+  `cdn-upload/` staging folder is gone.
+- Intro splash: the sound toggle is removed (the video autoplays muted).
+
+### Fixed
+- **Pedal & steering bars no longer wander off-screen.** On displays with
+  scaling above 100 % the throttle/brake/clutch canvases fed their own
+  device-pixel size back into flex layout every frame, growing exponentially
+  and pushing the steering bar out of the card. (`min-height:0` on the bar
+  canvases plus a hardened canvas-fit routine.)
+- Same bug family: canvases inside cards hidden with 👁 kept growing their
+  backing store ×dpr every frame while invisible. Canvas widgets now skip
+  the frame entirely when they have no layout size - which also stops
+  spending CPU drawing invisible gauges.
+- A single NaN telemetry frame could permanently freeze a dial (NaN poisons
+  the needle easing); gauge inputs are now validated.
+- The G-meter trail is stored in g-space instead of pixels, so maximizing or
+  resizing the card re-projects the trail instead of smearing it.
+
+### Performance
+- Unit and gauge preferences are memoized - previously every conversion did
+  a localStorage read + JSON.parse, several times per frame at 60 Hz.
+- Stats readouts only touch the DOM while the Stats tab is visible
+  (accumulation still runs on every telemetry frame).
+- The navigation position poll now has an in-flight guard like the other
+  pollers, so a slow game response can't stack requests.
+
+---
+
 ## v0.4 - 2026-06-10
 
 The customization update: a cross-tab **layout editor**, per-quantity

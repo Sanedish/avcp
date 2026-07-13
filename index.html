@@ -13,7 +13,7 @@
       <img class="logo" src="/ui/images/beamng_logo_50x50.png" alt="BeamNG"
            onerror="this.outerHTML='<span class=&quot;logo logo-fallback&quot;>⚙</span>'">
       <div class="brand-text">
-        <div class="brand-title">Luna <span class="brand-accent">Mattins</span> AVCP<span class="ver">v0.4</span></div>
+        <div class="brand-title">Luna <span class="brand-accent">Mattins</span> AVCP<span class="ver">v0.5</span></div>
         <div class="brand-sub" id="vehName">no vehicle</div>
       </div>
     </div>
@@ -34,6 +34,10 @@
     </nav>
 
     <div class="status">
+      <button class="mini" id="editBtn" style="margin-right:8px;background:none;border:none;color:var(--dim);cursor:pointer;font-weight:600">Edit</button>
+      <button class="mini" id="cancelBtn" style="display:none; margin-right:4px;">Cancel</button>
+      <button class="mini" id="addBtn" style="display:none; margin-right:8px;">+ Add</button>
+      <button class="mini" id="resetBtn" style="display:none; margin-right:8px;">Reset</button>
       <span class="pill" id="simSpeedPill">1.0×</span>
       <span class="conn" id="conn"><i class="dot"></i><span id="connText">connecting…</span></span>
     </div>
@@ -43,20 +47,20 @@
 
     <!-- ===================== DASHBOARD ===================== -->
     <section class="page active" id="page-dashboard">
-      <div class="grid dash-grid">
-        <div class="card gauge-card">
+      <div class="grid dash-grid tile-grid">
+        <div class="card gauge-card" data-tile="speed" data-gx="0" data-gy="0" data-gw="3" data-gh="3">
           <canvas class="gauge" id="gSpeed"></canvas>
         </div>
-        <div class="card gauge-card">
+        <div class="card gauge-card" data-tile="tach" data-gx="3" data-gy="0" data-gw="3" data-gh="3">
           <canvas class="gauge" id="gTach"></canvas>
           <div class="gear-badge"><span id="gearVal">N</span></div>
         </div>
-        <div class="card gmeter-card">
+        <div class="card gmeter-card" data-tile="gforce" data-gx="6" data-gy="0" data-gw="3" data-gh="3">
           <div class="card-h">G-Force <button class="mini" id="gReset">reset</button></div>
           <canvas id="gMeter"></canvas>
         </div>
 
-        <div class="card inputs-card">
+        <div class="card inputs-card" data-tile="inputs" data-gx="9" data-gy="0" data-gw="3" data-gh="3">
           <div class="card-h">Driver Inputs</div>
           <div class="pedal-row">
             <div class="pedal"><label>Throttle</label><canvas class="vbar" data-bar="throttle"></canvas></div>
@@ -67,7 +71,7 @@
           <canvas class="hbar" id="steerBar"></canvas>
         </div>
 
-        <div class="card indicators-card">
+        <div class="card indicators-card" data-tile="indicators" data-gx="0" data-gy="3" data-gw="4" data-gh="4">
           <div class="card-h">Indicators</div>
           <div class="indicators" id="indicators">
             <div class="ind" data-k="signal_L">[ ⇐ LEFT ]</div>
@@ -86,17 +90,17 @@
           <div class="readouts" id="readouts"></div>
         </div>
 
-        <div class="card chart-card">
+        <div class="card chart-card" data-tile="chart" data-gx="4" data-gy="3" data-gw="8" data-gh="4">
           <div class="card-h">Speed / RPM history</div>
           <canvas id="histChart"></canvas>
         </div>
 
-        <div class="card wheels-card">
+        <div class="card wheels-card" data-tile="wheels" data-gx="0" data-gy="7" data-gw="6" data-gh="3">
           <div class="card-h">Wheels (slip / drive·brake)</div>
           <div class="wheels" id="wheels"></div>
         </div>
 
-        <div class="card nav-card">
+        <div class="card nav-card" data-tile="nav" data-gx="6" data-gy="7" data-gw="6" data-gh="3">
           <div class="card-h">Navigation <span class="aid" id="navCoords">–</span></div>
           <div class="nav-wrap">
             <canvas id="compass" class="navcanvas"></canvas>
@@ -106,7 +110,7 @@
             (forward = up). Not a terrain map.</div>
         </div>
 
-        <div class="card raw-card">
+        <div class="card raw-card" data-tile="raw" data-gx="0" data-gy="10" data-gw="6" data-gh="3">
           <div class="card-h">Raw telemetry <button class="mini" id="rawToggle">show</button></div>
           <div class="raw-table hidden" id="rawTable"></div>
         </div>
@@ -115,20 +119,20 @@
 
     <!-- ===================== VEHICLE ===================== -->
     <section class="page" id="page-vehicle">
-      <div class="grid">
-        <div class="card">
+      <div class="grid tile-grid">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Quick Actions</div>
           <div class="btn-grid" id="vehActions"></div>
         </div>
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Lights &amp; Electrics</div>
           <div class="btn-grid" id="vehElectrics"></div>
         </div>
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Powertrain</div>
           <div class="btn-grid" id="vehPowertrain"></div>
         </div>
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Spawn / Replace Vehicle</div>
           <div class="row">
             <input id="spawnModel" list="modelList" autocomplete="off" placeholder="model key (e.g. etk800, covet, sunburst2)" />
@@ -147,7 +151,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Fuel / Energy <span class="aid" id="fuelLevel">–</span></div>
           <div class="btn-grid" id="fuelBtns"></div>
           <label class="slider-label">Set level <span id="fuelSetVal">100%</span></label>
@@ -156,7 +160,7 @@
             Best-effort across vehicles - drag then release to apply.</div>
         </div>
 
-        <div class="card offroad-card">
+        <div class="card offroad-card" data-gw="4" data-gh="4">
           <div class="card-h">Drivetrain / Off-road
             <span class="ctx-toggle">
               <button class="mini" id="offRefresh">refresh</button>
@@ -172,8 +176,8 @@
 
     <!-- ===================== WORLD ===================== -->
     <section class="page" id="page-world">
-      <div class="grid">
-        <div class="card">
+      <div class="grid tile-grid">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Time of Day</div>
           <input type="range" id="todSlider" min="0" max="1" step="0.005" value="0.5" class="slider">
           <div class="slider-val" id="todVal">12:00</div>
@@ -188,23 +192,23 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Simulation Speed</div>
           <div class="btn-grid" id="simSpeeds"></div>
           <div class="hint">Slow-motion is great for inspecting crashes &amp; suspension.</div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Gravity</div>
           <div class="btn-grid" id="gravityGrid"></div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Camera &amp; Sim</div>
           <div class="btn-grid" id="worldMisc"></div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Weather</div>
           <label class="slider-label">Fog density</label>
           <input type="range" id="fogSlider" min="0" max="1" step="0.01" value="0" class="slider">
@@ -218,15 +222,15 @@
 
     <!-- ===================== CHAOS & PHYSICS ===================== -->
     <section class="page" id="page-chaos">
-      <div class="grid">
-        <div class="card">
+      <div class="grid tile-grid">
+        <div class="card" data-gw="4" data-gh="5">
           <div class="card-h">Instant State Triggers</div>
           <div class="trigger-grid" id="chaosTriggers"></div>
           <div class="hint">Acts on the active vehicle. Deflate/break are physical &amp; irreversible
             until you <b>Repair</b> (rebuilds the vehicle in place).</div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="6">
           <div class="card-h">Time Dilation</div>
           <label class="slider-label">Slow-motion <span id="chaosSlowVal">1.0×</span></label>
           <input type="range" id="chaosSlow" min="1" max="100" step="1" value="1" class="slider">
@@ -237,7 +241,7 @@
             momentary bullet-time burst (snaps back to real-time on release).</div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="5">
           <div class="card-h">Gravity Matrix</div>
           <div class="btn-grid" id="chaosGravity"></div>
           <label class="slider-label">Fine tune <span id="chaosGravVal">-9.81 m/s²</span></label>
@@ -249,8 +253,8 @@
 
     <!-- ===================== AI & TRAFFIC ===================== -->
     <section class="page" id="page-ai">
-      <div class="grid">
-        <div class="card">
+      <div class="grid tile-grid">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Quick Spawn</div>
           <label class="slider-label">Amount <span id="qsAmtVal">4</span></label>
           <input type="range" id="qsAmt" min="1" max="12" step="1" value="4" class="slider">
@@ -260,7 +264,7 @@
           <div class="hint" id="aiStatus">Chaos Factor drives traffic aggression and random events. Quick Spawn updates the behavior matrix after vehicles appear.</div>
         </div>
 
-        <div class="card matrix-card">
+        <div class="card matrix-card" data-gw="4" data-gh="4">
           <div class="card-h">Behavior Matrix
             <span class="ctx-toggle">
               <button class="mini" id="matrixRefresh">refresh</button>
@@ -271,7 +275,7 @@
           <div class="ai-matrix" id="aiMatrix"><div class="hint">Open this tab or hit refresh to list spawned vehicles. Your vehicle is shown for reference and cannot be changed here.</div></div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Player Vehicle AI</div>
           <div class="btn-grid" id="aiModes"></div>
           <label class="slider-label">AI aggression <span id="aiAggrVal">0.30</span></label>
@@ -280,7 +284,7 @@
           <div class="row"><input id="aiSpeed" type="number" value="80" min="0"><button class="btn" id="aiSetSpeed">Set speed mode</button></div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Traffic System</div>
           <div class="btn-grid">
             <button class="btn primary" id="trafficActivate">Activate</button>
@@ -300,18 +304,18 @@
 
     <!-- ===================== STATISTICS ===================== -->
     <section class="page" id="page-stats">
-      <div class="grid stats-grid">
-        <div class="card stat"><div class="stat-label">Top speed</div><div class="stat-val" id="stTopSpeed">–</div></div>
-        <div class="card stat"><div class="stat-label">Max RPM</div><div class="stat-val" id="stMaxRpm">–</div></div>
-        <div class="card stat"><div class="stat-label">Max lateral G</div><div class="stat-val" id="stMaxLat">–</div></div>
-        <div class="card stat"><div class="stat-label">Max accel/brake G</div><div class="stat-val" id="stMaxLon">–</div></div>
-        <div class="card stat"><div class="stat-label">0–100 km/h</div><div class="stat-val" id="st0100">–</div></div>
-        <div class="card stat"><div class="stat-label">0–60 mph</div><div class="stat-val" id="st060">–</div></div>
-        <div class="card stat"><div class="stat-label">Distance (session)</div><div class="stat-val" id="stDist">–</div></div>
-        <div class="card stat"><div class="stat-label">Odometer</div><div class="stat-val" id="stOdo">–</div></div>
+      <div class="grid stats-grid tile-grid">
+        <div class="card stat" data-gw="3" data-gh="2"><div class="stat-label">Top speed</div><div class="stat-val" id="stTopSpeed">–</div></div>
+        <div class="card stat" data-gw="3" data-gh="2"><div class="stat-label">Max RPM</div><div class="stat-val" id="stMaxRpm">–</div></div>
+        <div class="card stat" data-gw="3" data-gh="2"><div class="stat-label">Max lateral G</div><div class="stat-val" id="stMaxLat">–</div></div>
+        <div class="card stat" data-gw="3" data-gh="2"><div class="stat-label">Max accel/brake G</div><div class="stat-val" id="stMaxLon">–</div></div>
+        <div class="card stat" data-gw="3" data-gh="2"><div class="stat-label">0–100 km/h</div><div class="stat-val" id="st0100">–</div></div>
+        <div class="card stat" data-gw="3" data-gh="2"><div class="stat-label">0–60 mph</div><div class="stat-val" id="st060">–</div></div>
+        <div class="card stat" data-gw="3" data-gh="2"><div class="stat-label">Distance (session)</div><div class="stat-val" id="stDist">–</div></div>
+        <div class="card stat" data-gw="3" data-gh="2"><div class="stat-label">Odometer</div><div class="stat-val" id="stOdo">–</div></div>
 
         <!-- ===== live performance (FPS / memory / VRAM, read from the engine) ===== -->
-        <div class="card perf-tri">
+        <div class="card perf-tri" data-gw="4" data-gh="4">
           <div class="card-h">Frame rate
             <span class="ctx-toggle"><span class="aid" id="perfFt">– ms</span><button class="mini" id="perfReset">reset</button></span>
           </div>
@@ -324,7 +328,7 @@
           <canvas id="fpsChart" class="perfcanvas"></canvas>
         </div>
 
-        <div class="card perf-tri">
+        <div class="card perf-tri" data-gw="4" data-gh="4">
           <div class="card-h">Memory <span class="aid" id="memSys">–</span></div>
           <div class="perf-hero"><span class="perf-big" id="memBig">–</span><span class="perf-unit">GB</span></div>
           <div class="perf-sub">BeamNG process working set · bar = system RAM</div>
@@ -332,7 +336,7 @@
           <canvas id="memChart" class="perfcanvas"></canvas>
         </div>
 
-        <div class="card perf-tri">
+        <div class="card perf-tri" data-gw="4" data-gh="4">
           <div class="card-h">GPU · VRAM <span class="aid" id="vramPct">–</span></div>
           <div class="perf-hero"><span class="perf-big" id="vramBig">–</span><span class="perf-unit">GB</span></div>
           <div class="perf-sub" id="vramTotalNote">video memory in use</div>
@@ -340,19 +344,19 @@
           <canvas id="vramChart" class="perfcanvas"></canvas>
         </div>
 
-        <div class="card sysinfo-card">
+        <div class="card sysinfo-card" data-gw="4" data-gh="4">
           <div class="card-h">System</div>
           <div class="raw-table" id="sysInfoTable"><div class="hint">Connect to the running game to read CPU / GPU / RAM info.</div></div>
         </div>
 
-        <div class="card luatasks-card">
+        <div class="card luatasks-card" data-gw="4" data-gh="4">
           <div class="card-h">Resource hogs · GE Lua profiler
             <span class="ctx-toggle"><span class="aid" id="luaTasksStatus">idle</span><button class="mini" id="luaProfileBtn">profile 2s</button></span>
           </div>
           <div class="luatasks" id="luaTasks"><div class="hint">Samples BeamNG's game-engine Lua VM for ~2 s and ranks the functions that ate the most time - the closest "what's eating the frame" breakdown the game exposes to a UI. It profiles only the GE Lua thread (not C++ render/physics or the vehicle VM), adds a little overhead while sampling, then switches itself back off.</div></div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Session</div>
           <div class="btn-grid">
             <button class="btn" id="stReset">Reset session stats</button>
@@ -368,7 +372,7 @@
           <div class="hint">Records speed/RPM/inputs/temps at ~5 Hz into memory, then downloads a
             CSV in your browser. Nothing is written to the game folder.</div>
         </div>
-        <div class="card vehinfo-card">
+        <div class="card vehinfo-card" data-gw="4" data-gh="4">
           <div class="card-h">Vehicle info</div>
           <div class="raw-table" id="vehInfoTable"></div>
         </div>
@@ -377,8 +381,8 @@
 
     <!-- ===================== DATA LAB ===================== -->
     <section class="page" id="page-datalab">
-      <div class="grid">
-        <div class="card dl-rec-card">
+      <div class="grid tile-grid">
+        <div class="card dl-rec-card" data-gw="6" data-gh="7">
           <div class="card-h">Recorder <span class="aid" id="dlRecState">idle</span></div>
           <div class="row">
             <input id="dlName" placeholder="take name (auto-named if empty)" autocomplete="off">
@@ -407,7 +411,7 @@
             again in the graph.</div>
         </div>
 
-        <div class="card dl-lib-card">
+        <div class="card dl-lib-card" data-gw="6" data-gh="7">
           <div class="card-h">Library
             <span class="ctx-toggle">
               <span class="aid" id="dlStorage"></span>
@@ -422,7 +426,7 @@
             between machines and people.</div>
         </div>
 
-        <div class="card flow-card dl-an-card">
+        <div class="card flow-card dl-an-card" data-gw="12" data-gh="13">
           <div class="card-h">Analyzer <span class="aid" id="dlTitle">no recording loaded</span></div>
           <div class="dl-transport">
             <button class="btn" id="dlToStart" title="Jump to start">⏮</button>
@@ -466,16 +470,16 @@
 
     <!-- ===================== DIAGNOSTICS ===================== -->
     <section class="page" id="page-diag">
-      <div class="grid">
-        <div class="card">
+      <div class="grid tile-grid">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Thermals &amp; Engine load</div>
           <div class="thermo" id="thermo"><div class="hint">Waiting for telemetry…</div></div>
         </div>
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Brake Power &amp; Temp <span class="aid" id="brakeTotal">surface temp · power</span></div>
           <div class="brakes" id="brakeGrid"><div class="hint">Waiting for telemetry…</div></div>
         </div>
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Damage State:<span class="aid" id="dmgState">–</span></div>
           <div class="damage" id="damageGrid"><div class="hint">Waiting for telemetry…</div></div>
           <div class="btn-grid" style="margin-top:12px">
@@ -483,7 +487,7 @@
             <button class="mini" id="dmgRefresh">refresh</button>
           </div>
         </div>
-        <div class="card flow-card">
+        <div class="card flow-card" data-gw="4" data-gh="4">
           <div class="card-h">Powertrain Flow <span class="aid" id="flowLayout">–</span></div>
           <div class="flow" id="powerFlow"><div class="hint">Waiting for telemetry…</div></div>
           <div class="hint">Live Power Graph - Lit nodes &amp; arrows show where torque is flowing, driven wheels are highlighted.</div>
@@ -493,20 +497,20 @@
 
     <!-- ===================== SUSPENSION ===================== -->
     <section class="page" id="page-susp">
-      <div class="grid">
-        <div class="card">
+      <div class="grid tile-grid">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Chassis Load Map <span class="aid" id="suspTotal">–</span></div>
           <canvas id="chassisMap" class="suspcanvas"></canvas>
           <div class="susp-attitude" id="suspAttitude"></div>
         </div>
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Damper Rebound <span class="aid">compression ▲ / rebound ▼</span></div>
           <div class="damper-grid" id="damperGrid"><div class="hint">Waiting for telemetry…</div></div>
           <div class="hint">Bars show each corner's load rate &amp; how hard the damper is resisting
             compression (orange) or rebound (blue) at the time.</div>
         </div>
 
-        <div class="card offroad-susp-card">
+        <div class="card offroad-susp-card" data-gw="4" data-gh="4">
           <div class="card-h">Pre-Runner Suspension Travel
             <span class="ctx-toggle">
               <span class="aid airborne" id="orFlightState"></span>
@@ -525,7 +529,7 @@
             gravel, sand, asphalt…), read from the wheel's contact ground-model.</div>
         </div>
 
-        <div class="card flow-card">
+        <div class="card flow-card" data-gw="4" data-gh="4">
           <div class="card-h">Pre-Runner suspension compression graph<span class="aid">resting load + shared scale</span></div>
           <canvas id="compChart" class="suspcanvas tall"></canvas>
           <div class="hint">Each corner's live compression as a multiple of its resting load. The dashed
@@ -533,7 +537,7 @@
             soaks up - and dips toward zero are the wheel extending into droop or going airborne.</div>
         </div>
 
-          <div class="card flow-card">
+          <div class="card flow-card" data-gw="4" data-gh="4">
           <div class="card-h">Per-corner load [GP]<span class="aid">kN · shared scale</span></div>
           <canvas id="loadChart" class="suspcanvas tall"></canvas>
           <div class="hint">Vertical contact load per wheel over time. Watch how fast spikes settle
@@ -544,7 +548,7 @@
 
     <!-- ===================== CONSOLE ===================== -->
     <section class="page" id="page-console">
-      <div class="card console-card">
+      <div class="card console-card" data-gw="4" data-gh="4">
         <div class="card-h">
           Lua Console
           <span class="ctx-toggle">
@@ -564,8 +568,8 @@
 
     <!-- ===================== SETTINGS ===================== -->
     <section class="page" id="page-settings">
-      <div class="grid">
-        <div class="card">
+      <div class="grid tile-grid">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Theme</div>
           <div class="theme-grid" id="themeGrid"></div>
           <label class="slider-label" style="margin-top:16px">Custom colours</label>
@@ -578,7 +582,7 @@
             gauges included.</div>
         </div>
 
-        <div class="card css-card">
+        <div class="card css-card" data-gw="4" data-gh="4">
           <div class="card-h">Custom CSS <span class="aid" id="cssState">on</span></div>
           <textarea id="cssBox" class="css-box" spellcheck="false" placeholder="/* Your CSS loads last, so it overrides the panel's stylesheet.
    Useful tokens: --accent --data --bg --surface --surface-2 --field
@@ -598,7 +602,32 @@
             <button class="mini" id="cssClear">clear saved css</button></div>
         </div>
 
-        <div class="card appearance-card">
+        <div class="card remote-card" id="remoteCard" data-gw="4" data-gh="4">
+          <div class="card-h">Remote Access <span class="aid" id="remoteState">off</span></div>
+          <div class="remote-down hidden" id="remoteDown"></div>
+          <div class="row">
+            <button class="btn" id="remoteToggle">Enable remote access</button>
+            <button class="btn danger hidden" id="remoteKick">Kick client</button>
+          </div>
+          <div class="remote-code hidden" id="remoteCode"></div>
+          <div class="hint" id="remoteStatus">Off.</div>
+          <label class="slider-label">Relay server <span>optional</span></label>
+          <div class="row">
+            <input id="relayUrl" placeholder="wss://avcp.malo-interactive.net (official)"
+              spellcheck="false" autocomplete="off">
+          </div>
+          <div class="hint">Use this panel on your phone: toggle on, open
+            <b id="remoteHost">avcp.malo-interactive.net</b> there and enter the code. Whoever enters the code can
+            control your game, so treat it like a remote-desktop code. Off by default, never
+            remembered across sessions, and it stops the moment you toggle off or close this tab.
+            Both connections are encrypted (TLS) and the devices never see each other's IP -
+            only the relay is contacted, and it stores nothing. Leave <i>Relay server</i> empty for
+            the official relay, or point it at your own - the full server plus a self-hosting
+            guide ships in the repo's <b>server/</b> folder.<br><br>
+            <b style="color:var(--bad)">WARNING: WSS is basically an remote-control-exploit [RCE] when misused.</b></div>
+        </div>
+
+        <div class="card appearance-card" data-gw="4" data-gh="4">
           <div class="card-h">Personalization · Background &amp; Glass</div>
           <label class="slider-label" style="margin-top:0">Background</label>
           <div class="bg-grid" id="bgPresetGrid"></div>
@@ -630,7 +659,7 @@
             glass blur or switch glass off.</div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Units</div>
           <div class="btn-grid" id="unitsGrid">
             <button class="btn" data-units="metric">Metric (km/h · °C)</button>
@@ -666,7 +695,7 @@
             never see it again, switch it off here - the setting is permanent until reset.</div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Gauges <button class="mini" id="gaugeReset">reset</button></div>
           <label class="slider-label">Speed dial max <span id="gSpeedMaxVal">240</span></label>
           <input type="range" id="gSpeedMax" min="120" max="400" step="10" value="240" class="slider">
@@ -684,7 +713,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Interface &amp; layout</div>
           <label class="slider-label">UI scale <span id="uiScaleVal">100%</span></label>
           <input type="range" id="uiScale" min="80" max="130" step="5" value="100" class="slider">
@@ -701,7 +730,7 @@
             tab safely resets itself instead of scrambling.</div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Driving alerts</div>
           <div class="btn-grid">
             <button class="btn" id="alShift">Shift light</button>
@@ -717,7 +746,7 @@
             above the threshold. Purely visual - no sounds, nothing is sent to the game.</div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Profiles
             <span class="ctx-toggle">
               <button class="mini" id="profImport">import json</button>
@@ -736,18 +765,19 @@
             travel fine).</div>
         </div>
 
-        <div class="card">
+        <div class="card" data-gw="4" data-gh="4">
           <div class="card-h">Online gallery <span class="aid">optional · CDN</span></div>
           <div class="btn-grid">
             <button class="btn primary" id="galleryBrowse">Browse gallery</button>
           </div>
           <div id="galleryBox" style="margin-top:12px"></div>
-          <div class="hint">Curated themes, backgrounds and profiles from the Malo Interactive
-            CDN. Nothing is fetched until you press Browse; applied backgrounds display
-            straight from the CDN. Needs internet access.</div>
+          <div class="hint">Curated backgrounds and profiles from the Malo Interactive CDN.
+            Nothing is fetched until you press Browse; applied backgrounds display straight
+            from the CDN. Needs internet access. Want yours added? Submit it in our Discord
+            (Credits tab) for review.</div>
         </div>
 
-        <div class="card storage-card">
+        <div class="card storage-card" data-gw="4" data-gh="4">
           <div class="card-h">Storage &amp; reset</div>
           <p class="hint" id="storageNote">Settings are saved in this browser's localStorage
             (key prefix <code>avcp.</code>); custom background images and Data Lab recordings
@@ -764,53 +794,57 @@
 
     <!-- ===================== CREDITS ===================== -->
     <section class="page" id="page-credits">
-      <div class="grid credits-grid">
-        <div class="card credits-hero">
+      <div class="grid credits-grid tile-grid">
+        <div class="card credits-hero" data-gx="0" data-gy="0" data-gw="8" data-gh="5">
           <div class="credits-kicker">Advanced Vehicle Control Panel</div>
           <h1>Luna Mattins AVCP</h1>
-          <p class="creator-note">LMAVCP is a remastered, browser-based control and telemetry panel for BeamNG.drive.</p>
+          <p class="creator-note">A remastered, browser-based control &amp; telemetry panel for
+            BeamNG.drive — live gauges, chaos tools, a session data-logger and more, all in one overlay.
+            <span class="ver">v0.5</span></p>
         </div>
 
-        <div class="card credits-card discord-card">
+        <div class="card credits-card discord-card" data-gx="0" data-gy="5" data-gw="4" data-gh="7">
           <div class="discord-text">
             <div class="credits-kicker">Community</div>
             <div class="card-h">Join us on Discord</div>
-            <p>LMAVCP is a solo project and still evolving. If you'd like developer news, want to
-              suggest features, report bugs, or just chat with the devs and others interested in the mod feel free to join! </p>
+            <p>LMAVCP is a solo project and still evolving. Come for developer news, to suggest
+              features, report bugs, or just to hang out with others running the mod.</p>
             <a class="btn primary discord-btn" href="https://discord.gg/MBahu2ydFH" target="_blank" rel="noopener noreferrer">Join our Discord →</a>
             <p class="credits-small-note">Invite: <code>discord.gg/MBahu2ydFH</code></p>
           </div>
           <div class="discord-embed">
             <iframe src="https://discord.com/widget?id=1512493985883492352&amp;theme=dark"
-                    width="350" height="500" allowtransparency="true" frameborder="0"
+                    width="350" height="380" allowtransparency="true" frameborder="0"
                     title="BeamNG AVCP Discord Embed"
                     sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
                     loading="lazy"></iframe>
           </div>
         </div>
 
-        <div class="card credits-card credits-note-card">
-          <div class="card-h">Thank you! <3</div>
-          <p>Thank you to the BeamNG.drive team for building such a deep, passionate simulation sandbox - and for letting users like me mod it to this extent.</p>
-          <p>Special thanks to everyone who tested LMAVCP at this early stage and helped shape the project.</p>
+        <div class="card credits-card credits-note-card" data-gx="4" data-gy="5" data-gw="4" data-gh="7">
+          <div class="card-h">Thank you <span class="heart">&lt;3</span></div>
+          <p>To the BeamNG.drive team, for building such a deep, passionate simulation sandbox — and
+            for letting users like me mod it to this extent.</p>
+          <p>And to everyone who tested LMAVCP at this early stage and helped shape it.</p>
         </div>
 
-        <div class="card credits-card credits-legal">
+        <div class="card credits-card credits-legal" data-gx="8" data-gy="5" data-gw="4" data-gh="7">
           <div class="card-h">Attribution</div>
-          <p>BeamNG.drive&reg; is a registered trademark of BeamNG GmbH.</p>
-          <p>This is an unofficial, user-made mod and is not affiliated with or endorsed by BeamNG GmbH.</p>
-          <p>The header logo is referenced from the installed BeamNG.drive UI at runtime. The logo file is not included, copied, modified, or redistributed in this mod archive.</p>
-          <p>Luna Mattins / Sanedish is not affiliated with the BeamNG.drive&reg; developer team or trademark in any form and publishes this content solely as a user-made mod.</p>
+          <p>BeamNG.drive&reg; is a registered trademark of BeamNG GmbH. This is an unofficial,
+            user-made mod, not affiliated with or endorsed by BeamNG GmbH.</p>
+          <p>The header logo is referenced from the installed BeamNG.drive UI at runtime — the logo
+            file is not included, copied, modified, or redistributed in this archive.</p>
+          <p>Luna Mattins / Sanedish is not affiliated with the BeamNG.drive&reg; developer team or
+            trademark in any form, and publishes this solely as a user-made mod.</p>
         </div>
 
-        <div class="card credits-card credits-note-card">
+        <div class="card credits-card about-card" data-gx="8" data-gy="0" data-gw="4" data-gh="5">
           <div class="card-h">About development</div>
-          <p>LMAVCP is designed and programmed solo by me, Sanedish. I came into this with very
-            little experience around BeamNG's API and live dashboards, so parts of the codebase
-            were built or reworked with the help of AI-assisted tooling and other external help
-            that can't be individually attributed. Every feature ships only after being verified
-            against the running game.</p>
-          <img src="media/transparent.png" alt="WYPHIEEEEEEEEEEE!!!!! <3" width="256" height="256">
+          <p>LMAVCP is designed and programmed solo by me, <b>Sanedish</b>. I came in with little
+            experience around BeamNG's API and live dashboards, so parts of the codebase were built
+            or reworked with AI-assisted tooling and other help that can't be individually
+            attributed. Every feature ships only after being verified against the running game.</p>
+          <img class="about-art" src="media/transparent.png" alt="WYPHIEEEEEEEEEEE!!!!! <3" width="200" height="200">
         </div>
 
       </div>
@@ -834,6 +868,7 @@
   <script src="./js/settings.js"></script>
   <script src="./js/splash.js"></script>
   <script src="./js/bridge.js"></script>
+  <script src="./js/remote.js"></script>
   <script src="./js/gauges.js"></script>
   <script src="./js/customize.js"></script>
   <script src="./js/datalab.js"></script>

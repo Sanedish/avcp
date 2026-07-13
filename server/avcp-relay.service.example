@@ -1,0 +1,37 @@
+# AVCP relay - systemd unit
+#
+# Install:
+#   sudo cp avcp-relay.service.example /etc/systemd/system/avcp-relay.service
+#   (adjust User/WorkingDirectory paths to your setup)
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now avcp-relay
+# Logs:
+#   journalctl -u avcp-relay -f
+
+[Unit]
+Description=AVCP Remote Access relay
+After=network.target
+
+[Service]
+Type=simple
+User=avcp
+WorkingDirectory=/opt/avcp/server
+ExecStart=/usr/bin/node relay.js
+Restart=always
+RestartSec=3
+
+# --- configuration (see server/README.md for the full reference) ---
+Environment=PORT=8977
+Environment=BIND=127.0.0.1
+Environment=TRUST_PROXY=1
+Environment=PANEL_DIR=/opt/avcp
+
+# --- hardening (all optional, all recommended) ---
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/avcp
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

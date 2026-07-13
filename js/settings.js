@@ -136,7 +136,11 @@
     dist: ["km", "mi"],
     press: ["psi", "bar", "kpa"]
   };
+  // memoized: the render loop converts units many times per frame, and a
+  // localStorage read + JSON.parse per conversion adds up at 60 Hz
+  var unitsCache = null;
   function unitPrefs() {
+    if (unitsCache) return unitsCache;
     var p = Store.getJSON("units2", null);
     if (!p) {
       var imp = Store.get("units", "metric") === "imperial";
@@ -147,6 +151,7 @@
     for (var k in UNIT_CHOICES) {
       out[k] = UNIT_CHOICES[k].indexOf(p[k]) >= 0 ? p[k] : UNIT_CHOICES[k][0];
     }
+    unitsCache = out;
     return out;
   }
   function unitSystem() { return unitPrefs().speed === "mph" ? "imperial" : "metric"; }
@@ -178,6 +183,7 @@
     if (!(key in UNIT_CHOICES) || UNIT_CHOICES[key].indexOf(val) < 0) return;
     var p = unitPrefs(); p[key] = val;
     Store.setJSON("units2", p);
+    unitsCache = null;
     emit("units", unitSystem());
   }
 
@@ -190,18 +196,22 @@
     speedDecimals: 0,
     showTicks: true
   };
+  var gaugeCache = null; // memoized for the same reason as unitPrefs
   function gaugeCfg() {
+    if (gaugeCache) return gaugeCache;
     var c = Store.getJSON("gauges", {}) || {};
     var out = {};
     for (var k in GAUGE_DEFAULTS) out[k] = (c[k] != null) ? c[k] : GAUGE_DEFAULTS[k];
+    gaugeCache = out;
     return out;
   }
   function setGauge(key, val) {
     var c = Store.getJSON("gauges", {}) || {};
     c[key] = val; Store.setJSON("gauges", c);
+    gaugeCache = null;
     emit("gauges", gaugeCfg());
   }
-  function resetGauges() { Store.set("gauges", "{}"); emit("gauges", gaugeCfg()); }
+  function resetGauges() { Store.set("gauges", "{}"); gaugeCache = null; emit("gauges", gaugeCfg()); }
 
   // ----------------------------------------------- appearance / background
   // Personalization layer: a custom local background image (or a built-in
@@ -393,6 +403,7 @@
       Store.setJSON("units2", imp
         ? { speed: "mph", temp: "f", dist: "mi", press: "psi" }
         : { speed: "kmh", temp: "c", dist: "km", press: "psi" });
+      unitsCache = null;
       emit("units", unitSystem());
     },
     // gauges

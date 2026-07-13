@@ -1,1 +1,9 @@
 * text=auto
+# shell scripts must stay LF or bash refuses them (^M errors) - even when the
+# repo is checked out on Windows and copied to a server from there
+*.sh text eol=lf
+# batch files are safest CRLF (cmd.exe parsing quirks with bare LF)
+*.cmd text eol=crlf
+*.webm binary
+*.png binary
+*.zip binary

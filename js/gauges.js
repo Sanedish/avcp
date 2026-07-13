@@ -38,9 +38,12 @@
   function dpr() { return window.devicePixelRatio || 1; }
 
   function fit(canvas) {
+    // No layout size (hidden card, not attached yet) -> skip the frame. Never
+    // fall back to canvas.width: that's the DEVICE-pixel backing size, and at
+    // dpr>1 re-feeding it here multiplies the canvas by dpr every frame.
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return null;
     var r = dpr();
-    var w = canvas.clientWidth || canvas.width;
-    var h = canvas.clientHeight || canvas.height;
     if (canvas.width !== Math.round(w * r) || canvas.height !== Math.round(h * r)) {
       canvas.width = Math.round(w * r);
       canvas.height = Math.round(h * r);
@@ -69,6 +72,7 @@
   }
   Gauge.prototype.set = function (v, max) {
     if (max != null && isFinite(max) && max > 0) this.max = max;
+    if (v == null || !isFinite(v)) return; // one NaN frame must not poison the easing forever
     this.target = v;
   };
   // Live re-configuration from the Settings tab (per-gauge adjustments).
@@ -82,7 +86,8 @@
     if (cfg.unit != null) this.unit = cfg.unit;
   };
   Gauge.prototype.draw = function () {
-    var f = fit(this.canvas), ctx = f.ctx, w = f.w, h = f.h;
+    var f = fit(this.canvas); if (!f) return;
+    var ctx = f.ctx, w = f.w, h = f.h;
     this.value += (this.target - this.value) * this.smoothing;
     var v = this.value, accent = col(this.accentRole);
 
@@ -157,7 +162,8 @@
   GMeter.prototype.set = function (gx, gy) { this.gx = gx; this.gy = gy; };
   GMeter.prototype.reset = function () { this.maxLat = 0; this.maxLon = 0; this.history = []; this.peak = null; };
   GMeter.prototype.draw = function () {
-    var f = fit(this.canvas), ctx = f.ctx, w = f.w, h = f.h;
+    var f = fit(this.canvas); if (!f) return;
+    var ctx = f.ctx, w = f.w, h = f.h;
     var cx = w / 2, cy = h / 2, R = Math.min(w, h) * 0.44;
     var maxG = 2, scale = R / maxG;
     ctx.clearRect(0, 0, w, h);
@@ -186,15 +192,17 @@
     var mag = Math.sqrt(this.gx * this.gx + this.gy * this.gy);
     if (!this.peak || mag > this.peak.mag) this.peak = { gx: this.gx, gy: this.gy, mag: mag };
 
-    this.history.push([px, py]);
+    // trail is stored in g-space, not pixels, so a canvas resize (maximize,
+    // layout edit) re-projects it instead of smearing stale coordinates
+    this.history.push([this.gx, this.gy]);
     if (this.history.length > 40) this.history.shift();
     var trailRgb = COL.accent;
     for (var i = 1; i < this.history.length; i++) {
       ctx.strokeStyle = global.AVCP ? global.AVCP.rgba(trailRgb, i / this.history.length) : trailRgb;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(this.history[i - 1][0], this.history[i - 1][1]);
-      ctx.lineTo(this.history[i][0], this.history[i][1]);
+      ctx.moveTo(cx + this.history[i - 1][0] * scale, cy - this.history[i - 1][1] * scale);
+      ctx.lineTo(cx + this.history[i][0] * scale, cy - this.history[i][1] * scale);
       ctx.stroke();
     }
 
@@ -235,7 +243,8 @@
     }
   };
   Chart.prototype.draw = function () {
-    var f = fit(this.canvas), ctx = f.ctx, w = f.w, h = f.h;
+    var f = fit(this.canvas); if (!f) return;
+    var ctx = f.ctx, w = f.w, h = f.h;
     ctx.clearRect(0, 0, w, h);
     var pad = 4;
     ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
@@ -283,7 +292,8 @@
   };
   Compass.prototype.reset = function () { this.trail = []; this.pos = null; };
   Compass.prototype.draw = function () {
-    var f = fit(this.canvas), ctx = f.ctx, w = f.w, h = f.h;
+    var f = fit(this.canvas); if (!f) return;
+    var ctx = f.ctx, w = f.w, h = f.h;
     ctx.clearRect(0, 0, w, h);
     var cx = w / 2, cy = h / 2, R = Math.min(w, h) * 0.42;
     var hd = this.heading;
@@ -347,7 +357,8 @@
   /* -------------------------------------------------------------- bar (h/v) */
   function bar(canvas, value, opts) {
     opts = opts || {};
-    var f = fit(canvas), ctx = f.ctx, w = f.w, h = f.h;
+    var f = fit(canvas); if (!f) return;
+    var ctx = f.ctx, w = f.w, h = f.h;
     ctx.clearRect(0, 0, w, h);
     var frac = Math.max(0, Math.min(1, value));
     ctx.fillStyle = "rgba(255,255,255,0.08)";

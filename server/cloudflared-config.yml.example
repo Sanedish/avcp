@@ -1,0 +1,29 @@
+# AVCP relay - Cloudflare Tunnel (cloudflared) ingress config
+#
+# Cloudflare terminates TLS at its edge and the tunnel dials OUT from this
+# server to Cloudflare, so NO inbound ports need to be opened - you can block
+# all inbound traffic on the box. WebSockets pass through automatically, and
+# the true client IP arrives in the CF-Connecting-IP header (relay.js reads it
+# when TRUST_PROXY=1, so per-IP rate limiting keeps working).
+#
+# The domain (malo-interactive.net) must already be on Cloudflare (its
+# nameservers point at Cloudflare). One-time setup, all as root so the paths
+# match `cloudflared service install` (see server/README.md):
+#   sudo cloudflared tunnel login
+#   sudo cloudflared tunnel create avcp-relay      # writes /root/.cloudflared/<TUNNEL_ID>.json
+#   sudo cloudflared tunnel route dns avcp-relay avcp.malo-interactive.net
+#
+# Then place this file at /etc/cloudflared/config.yml (fill in <TUNNEL_ID>) and
+# install it as a service:
+#   sudo cloudflared service install
+#   sudo systemctl enable --now cloudflared
+
+tunnel: avcp-relay
+credentials-file: /root/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  - hostname: avcp.malo-interactive.net
+    service: http://127.0.0.1:8977
+  # everything else 404s (never reached for a single-hostname tunnel, but the
+  # catch-all is required by cloudflared)
+  - service: http_status:404

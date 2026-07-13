@@ -1,6 +1,9 @@
 # Build artifact — rebuild with package-mod.ps1
 LunaMattinsAVCP.zip
 
+# Relay dependencies — restored by npm install / the start launchers
+server/node_modules/
+
 # Local machine paths / permissions — never publish
 .claude/settings.local.json
 

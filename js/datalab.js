@@ -256,7 +256,7 @@
   var MAX_POINTS = 4e6;        // total samples × channels hard cap (~16 MB)
   var rec = {
     active: false, t0: 0, lastSample: 0, rate: 20,
-    time: [], chans: [], markers: []
+    time: [], chans: [], markers: [], lastMain: 0, lastMini: 0
   };
 
   function recPointCount() { return rec.time.length * rec.chans.length; }
@@ -299,6 +299,7 @@
     rec.active = true;
     rec.t0 = performance.now();
     rec.lastSample = 0;
+    rec.lastMain = 0; rec.lastMini = 0;
     rec.rate = p.rate;
     rec.time = [];
     rec.markers = [];
@@ -404,6 +405,11 @@
   var dirty = true;          // chart needs a redraw
   var lastWindow = null;     // {w0,w1,dur} of last draw, for pointer math
   var LIVE_WIN = 30;         // seconds of live tail shown while recording
+  // Recording redraw throttles: decouple the live chart from the 60 Hz frame
+  // loop so a long take can't drown the main thread. The mini strip rescans the
+  // WHOLE take each draw (O(samples×channels)), so it refreshes slowest.
+  var REC_MAIN_MS = 50;      // ~20 Hz live tail (bounded to LIVE_WIN, cheap)
+  var REC_MINI_MS = 250;     // ~4 Hz full-take overview strip
   var readoutRefs = [];      // [{chan, el}] for cheap per-frame value updates
 
   function isDriving() { return !!(view.drive && view.rec); }
@@ -730,10 +736,19 @@
   }
 
   // --------------------------------------------------------------- transport
+  // Background-throttling bypass: Web Workers run at full speed even in unfocused tabs
+  var bgWorkerBlob = new Blob([
+    "var t; self.onmessage = function(e) {",
+    "  if (e.data === 'start') { clearInterval(t); t = setInterval(function() { postMessage('tick'); }, 16); }",
+    "  if (e.data === 'stop') clearInterval(t);",
+    "};"
+  ], { type: "application/javascript" });
+  var tickerWorker = new Worker(URL.createObjectURL(bgWorkerBlob));
+
   var lastTs = 0;
   function tick(ts) {
-    // the rAF re-request lives OUTSIDE the try so one bad frame (odd vehicle
-    // data, detached canvas, …) can never kill the whole analyzer loop
+    // the worker keeps ticking regardless, and the try means one bad frame (odd
+    // vehicle data, detached canvas, …) can never kill the whole analyzer loop
     try {
       var dt = lastTs ? (ts - lastTs) / 1000 : 0;
       lastTs = ts;
@@ -752,20 +767,27 @@
 
       var page = $("#page-datalab");
       if (page && page.classList.contains("active")) {
-        // redraw when something moved, while recording (live tail), or on resize
         var resized = chart.clientWidth !== chart._lastW;
-        if (dirty || rec.active || resized) {
+        if (rec.active) {
+          // Recording: time-throttle the redraw instead of running it every
+          // frame. Running drawMain+drawMini at 60 Hz - the mini rescanning the
+          // whole growing take each time - was the "overwhelmed" jank.
+          if (resized || ts - rec.lastMain >= REC_MAIN_MS) {
+            chart._lastW = chart.clientWidth;
+            drawMain(); updateLiveMeta(); updateTimeLabel();
+            rec.lastMain = ts;
+          }
+          if (resized || ts - rec.lastMini >= REC_MINI_MS) { drawMini(); rec.lastMini = ts; }
+          dirty = false;
+        } else if (dirty || resized) {
           chart._lastW = chart.clientWidth;
-          drawMain(); drawMini();
-          if (rec.active) updateLiveMeta(); else updateReadout();
-          updateTimeLabel();
+          drawMain(); drawMini(); updateReadout(); updateTimeLabel();
           dirty = false;
         }
       }
     } catch (e) {
       console.error("[AVCP] Data Lab frame error:", e);
     }
-    requestAnimationFrame(tick);
   }
 
   function updateTimeLabel() {
@@ -1171,7 +1193,8 @@
     wireUI();
     refreshList();
     ctx.br.on("streams", onStreams);
-    requestAnimationFrame(tick);
+    tickerWorker.onmessage = function() { tick(performance.now()); };
+    tickerWorker.postMessage('start');
   }
 
   global.DataLab = {

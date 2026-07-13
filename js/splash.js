@@ -77,10 +77,7 @@
     skip.textContent = "Skip intro";
     ov.appendChild(skip);
 
-    var snd = document.createElement("button");
-    snd.className = "intro-sound"; snd.type = "button";
-    snd.title = "Toggle sound"; snd.textContent = "🔇";
-    ov.appendChild(snd);
+
 
     function dismiss() {
       if (done) return;
@@ -121,11 +118,7 @@
 
     skip.addEventListener("click", function (e) { e.stopPropagation(); dismiss(); });
     ov.addEventListener("click", dismiss); // anywhere skips
-    snd.addEventListener("click", function (e) {
-      e.stopPropagation();
-      vid.muted = !vid.muted;
-      snd.textContent = vid.muted ? "🔇" : "🔊";
-    });
+
     function onKey(e) { if (e.key === "Escape" || e.key === " " || e.key === "Enter") dismiss(); }
     document.addEventListener("keydown", onKey);
 

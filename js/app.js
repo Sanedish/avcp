@@ -24,6 +24,8 @@
       $$(".page").forEach(function (x) { x.classList.remove("active"); });
       t.classList.add("active");
       $("#page-" + t.dataset.tab).classList.add("active");
+      // per-tab UI scale (Settings → Interface) follows the visible page
+      if (window.Customize && Customize.applyScale) Customize.applyScale(t.dataset.tab);
       t.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
     });
   });
@@ -154,10 +156,39 @@
 
   var histAccum = 0;
 
+  // Background-throttling bypass: Web Workers run at full speed even in unfocused tabs
+  var bgWorkerBlob = new Blob([
+    "var t; self.onmessage = function(e) {",
+    "  if (e.data === 'start') { clearInterval(t); t = setInterval(function() { postMessage('tick'); }, 16); }",
+    "  if (e.data === 'stop') clearInterval(t);",
+    "};"
+  ], { type: "application/javascript" });
+  var tickerWorker = new Worker(URL.createObjectURL(bgWorkerBlob));
+
   function renderLoop() {
     var e = T.electrics, ei = T.engineInfo;
     histAccum++;
     var domTick = (histAccum % 3 === 0); // ~20fps cap for DOM-list rebuilds
+
+    // cloned gauge widgets (Customize) draw on whatever page they're on, so their
+    // telemetry snapshot is built OUTSIDE the dashboard gate. Cheap: only the
+    // active page's instances actually render.
+    if (window.Customize && Customize.renderWidgets) {
+      var wSpd = Math.abs((e.wheelspeed != null ? e.wheelspeed : (e.airspeed || 0)) * 3.6);
+      var wRpm = e.rpm != null ? e.rpm : (ei[4] || 0);
+      var wMax = ei[1] || 8000, wGrav = T.sensors.gravity ? Math.abs(T.sensors.gravity) : 9.81;
+      Customize.renderWidgets({
+        speedVal: AVCP.Units.speed(wSpd).val, speedUnit: AVCP.Units.speed(0).unit,
+        speedMax: AVCP.Units.speed(GCFG.speedMax).val, speedKmh: wSpd,
+        rpm: wRpm, rpmCeil: GCFG.rpmMax > 0 ? GCFG.rpmMax : Math.ceil(wMax / 1000) * 1000,
+        redline: (GCFG.rpmMax > 0 ? GCFG.rpmMax : wMax) * (GCFG.redlinePct / 100),
+        rpmFrac: wMax ? wRpm / wMax : 0,
+        gx: (T.sensors.gx2 != null ? T.sensors.gx2 : (T.sensors.gx || 0)) / wGrav,
+        gy: (T.sensors.gy2 != null ? T.sensors.gy2 : (T.sensors.gy || 0)) / wGrav,
+        yaw: T.sensors.yaw || 0, gear: e.gear != null ? e.gear : (e.gear_A || e.gear_M || "N"),
+        pos: navPos
+      }, histAccum % 4 === 0);
+    }
 
     // Only render a tab's widgets while that tab is actually visible - otherwise
     // we were redrawing the whole dashboard (3 canvases + 2 innerHTML rebuilds)
@@ -213,6 +244,7 @@
         updateReadouts(e, speedKmh, rpm);
         updateWheels();
         updateNavSide(e, speedKmh);
+        if (window.Customize && Customize.updateTiles) Customize.updateTiles(e);
         if (!rawTable.classList.contains("hidden")) renderRaw(e);
       }
     }
@@ -233,8 +265,6 @@
     }
     // stats tab: live FPS / memory / VRAM via one combined engine round-trip (~2 Hz)
     if (histAccum % 30 === 0 && $("#page-stats").classList.contains("active")) { pollPerf(); fetchSysInfo(); }
-
-    requestAnimationFrame(renderLoop);
   }
 
   // ----------------------------------------------------------- indicators
@@ -1140,7 +1170,8 @@
     }
     // driving alerts (shift light / overspeed) ride the same stream cadence
     if (window.Customize) Customize.tick(spd, rpm, T.engineInfo[1] || 0);
-    renderStats();
+    // stats accumulate every frame; the DOM only needs painting while visible
+    if ($("#page-stats").classList.contains("active")) renderStats();
   }
   function renderStats() {
     var U = AVCP.Units;
@@ -1319,11 +1350,12 @@
   // Heading comes from sensors.yaw (already streaming, free). World position has
   // no stream, so we poll it slowly via the engine VM only while the dashboard
   // is open. The compass widget keeps a breadcrumb trail for the radar.
-  var navPos = null;
+  var navPos = null, posInflight = false;
   function pollPosition() {
-    if (!br.connected) return;
+    if (!br.connected || posInflight) return;
+    posInflight = true;
     br.engineLuaCb("(function() local v=be:getPlayerVehicle(0) if not v then return nil end local p=v:getPosition() return {x=p.x,y=p.y,z=p.z} end)()")
-      .then(function (p) { if (p && typeof p.x === "number") { navPos = p; compass.pushPos(p); } });
+      .then(function (p) { posInflight = false; if (p && typeof p.x === "number") { navPos = p; compass.pushPos(p); } });
   }
   function updateNavSide(e, speedKmh) {
     var sp = AVCP.Units.speed(speedKmh);
@@ -1781,6 +1813,8 @@
   br.connect();
   // Arm the setup-required check. If the WebSocket never opens within the grace
   // window we conclude the game web-server isn't reachable (see fireSetupRequired).
-  setupTimer = setTimeout(fireSetupRequired, SETUP_GRACE_MAP_MS);
-  requestAnimationFrame(renderLoop);
+  // Remote (relay) clients pair by code on their own schedule - no alarm there.
+  if (!(window.AVCPRemote && AVCPRemote.isClient)) setupTimer = setTimeout(fireSetupRequired, SETUP_GRACE_MAP_MS);
+  tickerWorker.onmessage = renderLoop;
+  tickerWorker.postMessage('start');
 })();

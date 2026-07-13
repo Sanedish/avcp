@@ -85,6 +85,9 @@
 
   // --- websocket lifecycle ---------------------------------------------------
   Bridge.prototype._wsUrl = function () {
+    // Remote Access client mode: the page was served by the AVCP relay, so the
+    // game is reached through the relay's /client leg (see js/remote.js).
+    if (global.AVCPRemote && global.AVCPRemote.isClient) return global.AVCPRemote.clientWsUrl();
     var u = document.URL, pcol;
     if (u.substring(0, 5) === "https") { pcol = "wss://"; u = u.substr(8); }
     else { pcol = "ws://"; if (u.substring(0, 4) === "http") u = u.substr(7); }
@@ -93,6 +96,9 @@
 
   Bridge.prototype.connect = function () {
     var self = this;
+    // Remote client without a pairing code: nothing to dial yet. remote.js
+    // shows the code prompt and re-calls connect() once one is entered.
+    if (global.AVCPRemote && global.AVCPRemote.isClient && !global.AVCPRemote.gate(this)) return;
     try {
       this.ws = new WebSocket(this._wsUrl(), "bng-ext-app-v1");
     } catch (e) {
@@ -112,9 +118,11 @@
       self._pushSubscriptions();
     };
 
-    this.ws.onclose = function () {
+    this.ws.onclose = function (ev) {
       self.connected = false;
-      self.emit("connection", "closed");
+      // close code + reason let the remote client tell "code rejected" apart
+      // from a network blip; local listeners just ignore the extra args
+      self.emit("connection", "closed", ev && ev.code, ev && ev.reason);
       self._scheduleReconnect();
     };
 

@@ -117,6 +117,10 @@ landscape cut depending on your screen). Click anywhere to skip it; Settings →
   and profiles from the Malo Interactive CDN and apply them with one click.
   Nothing is fetched until you press *Browse*. Themes are deliberately local
   (presets + custom colours); to share a look, share a profile.
+- **Remote Access** - opt-in: control your own panel from a phone through a
+  pairing relay. The relay endpoint is a setting, so you can point it at a
+  self-hosted instance (full server + guide in `server/`); the card shows a
+  notice if the official relay is down.
 - **Interface** - whole-panel UI scale (80–130 %) and a startup-tab choice,
   plus the existing themes, custom colours, backgrounds, glassmorphism and
   per-gauge configuration.
@@ -216,8 +220,8 @@ plain text (HTML/CSS/JS) and can be read top-to-bottom in a few minutes.
 - ✅ **No analytics / phone-home / external libraries.** The panel's working
   connection is a WebSocket to the **game's own** external-app server on the
   page's host:port (`bng-ext-app-v1`). Nothing about the user or the session is
-  ever sent anywhere. Full disclosure - there are exactly **three** narrowly
-  scoped external fetches, all inert until reached:
+  ever sent anywhere. Full disclosure - there are exactly **four** narrowly
+  scoped external connections, all inert until reached:
   1. The **Credits tab** embeds Discord's standard server widget in a sandboxed
      `<iframe>` (loads from discord.com only when that tab is opened).
   2. The **first-launch intro video** is bundled locally under `media/`; only
@@ -233,6 +237,23 @@ plain text (HTML/CSS/JS) and can be read top-to-bottom in a few minutes.
      pings. (The user-authored **Custom CSS** setting can reference external
      URLs, like any stylesheet - that is user content, not something the mod
      ships or fetches.)
+  4. **Remote Access** (Settings) is a strictly **opt-in** toggle - OFF by
+     default, never persisted across sessions - that lets the user view and
+     control *their own* panel from another device (e.g. a phone) through a
+     pairing relay at `avcp.malo-interactive.net` **or a self-hosted relay**
+     (the endpoint is a plain setting; the full server plus a self-hosting
+     guide and wire-protocol spec ship in this repo under `server/`). Nothing
+     connects until the toggle is turned on; it shows a pairing code, the user
+     enters it on the other device, and everything stops the moment the toggle
+     goes off or the tab closes. The relay forwards the panel's existing
+     WebSocket frames verbatim and stores nothing (no accounts, no logs of
+     traffic). The mod zip itself contains no server code (`js/remote.js` is
+     the plain-JS client, human-readable like everything else). One auxiliary
+     fetch belongs to this feature: when the user opens the **Settings tab**,
+     the panel reads a small plain-text status file from the Malo Interactive
+     CDN to warn if the official relay is down (`STATUS=`/`REASON=` lines,
+     rendered as text). It sends nothing, runs only on that user action, and
+     is skipped entirely when a custom relay is configured.
 - ✅ **No obfuscation / no minification.** Source is original and human-readable.
 
 **Capabilities to be aware of (full disclosure)**
@@ -244,6 +265,12 @@ plain text (HTML/CSS/JS) and can be read top-to-bottom in a few minutes.
   The mod does not open ports or escalate privileges; it is a **client** to a
   server BeamNG itself runs. Disabling the external-app server in-game disables
   this mod entirely.
+- **Remote Access** (disclosure item 4 above) extends that reach to one remote
+  device *only* while the user has the toggle on and has shared the pairing
+  code - the same trust decision as reading out a remote-desktop code. The
+  host panel shows a persistent "client connected" state with a kick button,
+  allows exactly one client, and both legs of the connection are TLS via the
+  relay; neither device learns the other's IP.
 
 ---
 
@@ -258,12 +285,14 @@ ui/webcontrolpanel/
 │   ├── settings.js      # persisted prefs: themes, units, gauges, appearance
 │   ├── splash.js        # first-launch intro video (one-shot, user-disableable)
 │   ├── bridge.js        # WebSocket bridge: Lua calls, streams, hooks, callbacks
+│   ├── remote.js        # opt-in Remote Access: relay pairing (host + client roles)
 │   ├── gauges.js        # dependency-free canvas widgets (Gauge, GMeter, Chart, bar)
 │   ├── customize.js     # layout editor, profiles, alerts, online gallery, scale
 │   ├── datalab.js       # telemetry recorder, library (IndexedDB) & analyzer
 │   └── app.js           # wires the bridge to widgets, tabs, actions, console
 ├── images/              # author-supplied art (credits PFPs, icons) - auto-bundled
 ├── media/               # intro splash videos (16:9 + 9:16) + credits art - auto-bundled
+├── server/              # Remote Access relay (self-hostable; NOT in the mod zip)
 ├── package-mod.ps1      # build script → LunaMattinsAVCP.zip (author tool only)
 └── README.md            # this file
 ```
